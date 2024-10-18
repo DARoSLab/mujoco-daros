@@ -208,33 +208,48 @@ def _reload(
 
     return m, d
 
-
-def _daros_ctrl(m: mujoco.MjModel, d: mujoco.MjData) -> Tuple[mujoco.MjModel, mujoco.MjData]:
-    kp = 150
-    kd = 1.5
-    desired_position = np.array([0.0, -1.0, 0.0, 1.5, -1.0, 0.0])  # Example desired position
-
-    # use sin wave to generate desired position
-    freq = 0.5
-    amp = 0.6
-    desired_position[1] += amp*np.sin(2*np.pi * freq* d.time)
-    desired_position[3] += amp*(-np.sin(2*np.pi * freq* d.time))
-    desired_position[5] += 2*amp*(-np.sin(2*np.pi * freq* d.time))
+class JPosCtrl:
+  
+  def __init__(self, m: mujoco.MjModel, d: mujoco.MjData):
+    self.m = m
+    self.d = d
+    self.kp = 250
+    self.kd = 1.0 
+    self.init_qpos = d.qpos
+    self.trasit_time = 3.0
+    self.resting_time = 1.0
+    self.desired_position = np.array([0.0, -1.5, 0.0, 1.5, -1.0, 0.0])  # Example desired position
+  
+  def update(self):
+    target_position = self.desired_position.copy()
+    if self.d.time < self.resting_time:
+      # resting position
+      target_position = self.d.qpos.copy()
+      self.init_qpos = self.d.qpos.copy()
+    elif self.d.time < self.trasit_time + self.resting_time:
+      # moving toward desired position
+      target_position = self.init_qpos + (self.desired_position - self.init_qpos) * (self.d.time - self.resting_time) / self.trasit_time
+    else:
+      # use sin wave to generate desired position
+      freq = 0.7
+      amp = 0.6
+      time_offset = self.trasit_time + self.resting_time
+      target_position[1] += amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+      target_position[3] -= amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+      target_position[5] -= 2*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+      # print(target_position)
 
     # print(d.qpos)
-    position_error = desired_position - d.qpos
+    position_error = target_position - self.d.qpos
 
     # Calculate joint velocity
-    velocity = d.qvel
+    velocity = self.d.qvel
 
     # Calculate control signal
-    control_signal = kp * position_error - kd * velocity
+    control_signal = self.kp * position_error - self.kd * velocity
 
     # Apply control signal to joints
-    d.ctrl = control_signal
-   
-    return m, d
-
+    self.d.ctrl = control_signal
 
 def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
   """Physics loop for the GUI, to be run in a separate thread."""
@@ -246,6 +261,7 @@ def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
   # CPU-sim synchronization point.
   synccpu = 0.0
   syncsim = 0.0
+
 
   # Run until asked to exit.
   while not simulate.exitrequest:
@@ -262,6 +278,7 @@ def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
       result = _reload(simulate, loader)
       if result is not None:
         m, d = result
+        ctrl = JPosCtrl(m, d)
         ctrl_noise = np.zeros((m.nu,))
 
     reload = False
@@ -271,6 +288,7 @@ def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
       time.sleep(0)
     else:
       time.sleep(0.001)
+
 
     with simulate.lock():
       if m is not None:
@@ -283,6 +301,8 @@ def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
           elapsedcpu = startcpu - synccpu
           elapsedsim = d.time - syncsim
 
+          # Update control signal
+          ctrl.update()
           # Inject noise.
           if simulate.ctrl_noise_std != 0.0:
             # Convert rate and scale to discrete time (Ornstein–Uhlenbeck).
@@ -306,7 +326,6 @@ def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
                            elapsedsim) > MAX_SYNC_MISALIGN
 
           
-          m, d = _daros_ctrl(m, d)
           # Out-of-sync (for any reason): reset sync times, step.
           if (elapsedsim < 0 or elapsedcpu < 0 or synccpu == 0 or misaligned or
               simulate.speed_changed):
@@ -507,8 +526,9 @@ def launch_passive(
 if __name__ == '__main__':
   # pylint: disable=g-bad-import-order
   from absl import app  # pylint: disable=g-import-not-at-top
+  dir_path = os.path.dirname(os.path.realpath(__file__))
 
   def main(argv) -> None:
-    launch_from_path("../Robots/MiniArm/miniArm.xml")
+    launch_from_path(dir_path + "/../Robots/MiniArm/miniArm.xml")
 
   app.run(main)
