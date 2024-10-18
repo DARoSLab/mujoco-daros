@@ -213,31 +213,26 @@ class JPosCtrl:
   def __init__(self, m: mujoco.MjModel, d: mujoco.MjData):
     self.m = m
     self.d = d
-    self.kp = 250
-    self.kd = 1.0 
-    self.init_qpos = d.qpos.copy()
+    self.kp = 350
+    self.kd = 2.0 
+    self.init_qpos = d.qpos
     self.trasit_time = 3.0
-    self.resting_time = 1.0
-    self.desired_position = np.array([0.0, -1.5, 0.0, 1.5, -1.0, 0.0])  # Example desired position
+    self.resting_time = 0.0
+    self.desired_position = d.qpos.copy()  # Example desired position
   
   def update(self):
     target_position = self.desired_position.copy()
-    if self.d.time < self.resting_time:
-      # resting position
-      target_position = self.d.qpos.copy()
-      self.init_qpos = self.d.qpos.copy()
-    elif self.d.time < self.trasit_time + self.resting_time:
-      # moving toward desired position
-      target_position = self.init_qpos + (self.desired_position - self.init_qpos) * (self.d.time - self.resting_time) / self.trasit_time
-    else:
-      # use sin wave to generate desired position
-      freq = 0.7
-      amp = 0.6
-      time_offset = self.trasit_time + self.resting_time
-      target_position[1] += amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
-      target_position[3] -= amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
-      target_position[5] -= 2*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
-      # print(target_position)
+    freq = 0.7
+    amp = 0.3
+    time_offset = self.trasit_time + self.resting_time
+    target_position[10] = -amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+    target_position[17] = -amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+ 
+    # knee
+    target_position[11] = amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+    target_position[18] = amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+    #   target_position[5] -= 2*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+    # print(target_position[7:])
 
     # print(d.qpos)
     position_error = target_position - self.d.qpos
@@ -246,8 +241,8 @@ class JPosCtrl:
     velocity = self.d.qvel
 
     # Calculate control signal
-    control_signal = self.kp * position_error - self.kd * velocity
-
+    # control_signal = self.kp * position_error - self.kd * velocity
+    control_signal = self.kp * position_error[7:] -self.kd * velocity[6:]
     # Apply control signal to joints
     self.d.ctrl = control_signal
 
@@ -529,6 +524,6 @@ if __name__ == '__main__':
   dir_path = os.path.dirname(os.path.realpath(__file__))
 
   def main(argv) -> None:
-    launch_from_path(dir_path + "/../Robots/MiniArm/miniArm.xml")
+    launch_from_path(dir_path + "/../Robots/Prestoe/prestoe.xml")
 
   app.run(main)
