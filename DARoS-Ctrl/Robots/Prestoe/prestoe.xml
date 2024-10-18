@@ -24,6 +24,15 @@
     <mesh name="l_shoulder_roll_link" file="l_shoulder_roll_link.stl"/>
     <mesh name="l_upper_arm_link" file="l_upper_arm_link.stl"/>
     <mesh name="l_forearm_link" file="l_forearm_link.stl"/>
+    <material name="red_material" rgba="1 0 0 1"/>  # red
+    <material name="orange_material" rgba="1 0.5 0 1"/>  # orange
+    <material name="blue_material" rgba="0 0 1 1"/>  # blue
+    <material name="green_material" rgba="0 1 0 1"/>  # green
+    <material name="dark_green_material" rgba="0 0.55 0 1"/>  # dark green
+    <material name="yellow_material" rgba="1 1 0 1"/>  # yellow
+    <material name="purple_material" rgba="1 0 1 1"/>  # purple
+    <material name="pink_material" rgba="1 0.75 0.75 1"/>  # pink
+    <material name="white_material" rgba="1 1 1 1"/>  # white
   </asset>
   <!-- <default class="body">
   <joint type="hinge"/>
@@ -34,8 +43,9 @@
 
     <!-- <body name="torso_link" childclass="body" pos="0 0 1.4" quat="1 0 0 0"> -->
     <body name="torso_link" pos="0 0 1.4" quat="1 0 0 0">
-    <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="torso_link"/>
-    <geom type="box" size="0.069 0.110 0.04125" pos="0 0 0.07575" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
+    <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="torso_link" material="dark_green_material"/>
+    <!-- <geom type="box" size="0.069 0.110 0.04125" pos="0 0 0.07575" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/> -->
+    <geom type="box" size="0.069 0.110 0.14125" pos="0 0 0.17575" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
     <!-- <geom type="mesh" group="1" density="0" mesh="torso_link"/> -->
     <inertial pos="0.02827e-3 -0.53546e-3 170.93286e-3" quat="0.000767 0.7084 -0.0016093 0.7058" mass="7.3955327" diaginertia="314898.04974e-6 47419.11099e-6 292494.07567e-6"/>
     <site name="torso_link_sensor_site" pos="0 0 0" quat="1 0 0 0" size="0.01 0.01 0.01"/>
@@ -75,13 +85,13 @@
                 <body name="R_foot_link" pos="0 0 0" quat="1 0 0 0">
                   <inertial pos="0.0220939 -3.37e-06 -0.0501537" quat="0.655386 -0.265245 -0.265165 0.655593" mass="0.676969" diaginertia="0.00488256 0.00445821 0.000845387"/>
                   <joint name="R_ankleroll" pos="0 0 0" axis="1 0 0" armature="0.01728094176" damping="1.5" range="-0.523599 0.523599"/>
-                  <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="foot_link"/>
+                  <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="foot_link" material="purple_material"/>
                   <geom type="sphere" size="0.031146055" pos="-0.05183996 0 -0.02449384" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
                   <!-- <geom type="mesh" group="1" density="0" mesh="foot_link"/> -->
                   <body name="R_toe_link" pos="0.0849784e0 0 -0.0854385e0" quat="0.965926 0 0.258819 0">
                     <inertial pos="0.02749 0.00010489 -0.0263146" quat="0.00138974 0.865466 0.00264569 0.500958" mass="0.253959" diaginertia="0.000773787 0.000648318 0.000306826"/>
                     <joint name="R_toepitch" pos="0 0 0" axis="0 1 0" armature="0.01728094176" damping="1.5" range="-1.13446 0.174533"/>
-                    <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="toe_link"/>
+                    <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="toe_link" material="yellow_material"/>
                     <!-- <geom type="mesh" condim="0" group="1" density="0" mesh="toe_link"/> -->
                     <geom type="box" size="0.05 0.045 0.00698665" pos="0.034 0 -0.03748665" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
                   </body>
@@ -120,13 +130,13 @@
                 <body name="L_foot_link" pos="0 0 0" quat="1 0 0 0">
                   <inertial pos="0.0220939 -3.37e-06 -0.0501537" quat="0.655386 -0.265245 -0.265165 0.655593" mass="0.676969" diaginertia="0.00488256 0.00445821 0.000845387"/>
                   <joint name="L_ankleroll" pos="0 0 0" axis="1 0 0" armature="0.001728094176" damping="1.5" range="-0.523599 0.523599"/>
-                  <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="foot_link"/>
+                  <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="foot_link" material="purple_material"/>
                   <geom type="sphere" size="0.031146055" pos="-0.05183996 0 -0.02249384" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
                   <!-- <geom type="mesh" group="1" density="0" mesh="foot_link"/> -->
                   <body name="L_toe_link" pos="0.0849784e0 0 -0.0854385e0" quat="0.965926 0 0.258819 0">
                     <inertial pos="0.02749 0.00010489 -0.0263146" quat="0.00138974 0.865466 0.00264569 0.500958" mass="0.253959" diaginertia="0.000773787 0.000648318 0.000306826"/>
                     <joint name="L_toepitch" pos="0 0 0" axis="0 1 0" armature="0.01728094176" damping="1.5" range="-1.13446 0.174533"/>
-                    <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="toe_link"/>
+                    <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="toe_link" material="yellow_material"/>
                     <!-- <geom type="mesh" group="1" density="0" mesh="toe_link"/> -->
                     <geom type="box" size="0.05 0.045 0.00698665" pos="0.034 0 -0.03748665" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
                   </body>
@@ -155,8 +165,10 @@
           <!-- <geom pos="0 0 0" type="mesh" group="1" density="0" mesh="r_upper_arm_link"/> -->
           <body name="R_elbowpitch_link" pos="0 0.011e0 -0.279e0" quat="1 0 0 0">
             <inertial pos="-0.00197348 0.00352668 -0.118307" quat="0.706176 -0.00187907 -0.00170783 0.708032" mass="0.071224" diaginertia="0.000739713 0.000732267 8.40635e-06"/>
-            <joint name="R_elbowpitch" pos="0 0 0" axis="0 1 0" armature="0.0008766" damping="1.5" range="0 2.61799"/>
-            <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="r_forearm_link"/>
+            <joint name="R_elbowpitch" pos="0 0 0" axis="0 1 0" armature="0.0008766" damping="1.5" range="-3.14 3.14"/>
+            <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="r_forearm_link" material="orange_material"/>
+            <geom type="box" size="0.025 0.02 0.16" pos="0.0 0 -0.135" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
+            <!-- <geom type="sphere" size="0.07" pos="0.0 0 -0.1" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/> -->
             <!-- <geom type="mesh" group="1" density="0" mesh="r_forearm_link"/> -->
           </body>
         </body>
@@ -180,9 +192,10 @@
           <!-- <geom type="mesh" group="1" density="0" mesh="l_upper_arm_link"/> -->
           <body name="L_elbowpitch_link" pos="0 -0.011e0 -0.279e0" quat="1 0 0 0">
             <inertial pos="-0.00197348 -0.00352661 -0.118305" quat="0.708031 -0.00170748 -0.00187927 0.706177" mass="0.0712233" diaginertia="0.0007397 0.000732254 8.40632e-06"/>
-            <joint name="L_elbowpitch" pos="0 0 0" axis="0 1 0" armature="0.0008766" damping="1.5" range="0 2.61799"/>
-            <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="l_forearm_link"/>
+            <joint name="L_elbowpitch" pos="0 0 0" axis="0 1 0" armature="0.0008766" damping="1.5" range="-3.14 3.14"/>
+            <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" mesh="l_forearm_link" material="orange_material"/>
             <!-- <geom type="mesh" group="1" density="0" mesh="l_forearm_link"/> -->
+            <geom type="box" size="0.025 0.02 0.16" pos="0.0 0 -0.135" density="0" condim="3" contype="1" conaffinity="1" rgba="1 1 1 0"/>
             </body>
         </body>
       </body>

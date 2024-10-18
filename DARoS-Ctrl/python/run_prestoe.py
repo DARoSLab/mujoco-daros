@@ -216,22 +216,28 @@ class JPosCtrl:
     self.kp = 350
     self.kd = 2.0 
     self.init_qpos = d.qpos
-    self.trasit_time = 3.0
-    self.resting_time = 0.0
     self.desired_position = d.qpos.copy()  # Example desired position
   
   def update(self):
     target_position = self.desired_position.copy()
     freq = 0.7
     amp = 0.3
-    time_offset = self.trasit_time + self.resting_time
+    time_offset = 0.
     target_position[10] = -amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
     target_position[17] = -amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
  
     # knee
     target_position[11] = amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
     target_position[18] = amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
-    #   target_position[5] -= 2*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+
+    # Shoulder (right, left)
+    target_position[22] = amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+    target_position[26] = -amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+
+    # Shoulder
+    target_position[25] = -3.*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+    target_position[29] = -3.*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+      #   target_position[5] -= 2*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
     # print(target_position[7:])
 
     # print(d.qpos)
