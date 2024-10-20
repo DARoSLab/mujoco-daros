@@ -1,18 +1,5 @@
-__collection-name__: tello-parameters
-
-controller_dt     : 0.002
-
-# control_mode      : 1 # joint pd
-control_mode      : 2 # stand balance 
-# control_mode      : 3 # Walk_casadi 
-# control_mode      : 6 # stand_casadi
-# control_mode      : 0 # passive
-# control_mode      : 5 # Parkour_RL 
-
-
-myValue           : 2222
-
 use_rc: 0
+cheater_mode: 1
 
 Kp_ori            : [200, 200, 200]
 Kd_ori            : [3, 3, 3]

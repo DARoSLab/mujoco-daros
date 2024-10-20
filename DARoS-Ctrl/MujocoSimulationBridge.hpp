@@ -3,8 +3,8 @@
 
 #include<stdbool.h> 
 
-#include "mujoco/mujoco.h"
-#include "glfw3.h"
+#include <mujoco/mujoco.h>
+#include <GLFW/glfw3.h>
 #include "stdio.h"
 #include "stdlib.h"
 #include <string>
@@ -18,15 +18,13 @@ class MujocoSimulationBridge{
 
     public:
     
-        mjModel* _model=nullptr;
-        mjData* _mjDat=nullptr;
-    // virtual void control_callback(const mjModel* m, mjData* d) = 0;  // Virtual function to be overridden
+   // virtual void control_callback(const mjModel* m, mjData* d) = 0;  // Virtual function to be overridden
 
   
     MujocoSimulationBridge(const string mj_xml_file){
 
-        _model=mj_loadXML((mj_xml_file).c_str(), NULL, error, 1000);
-        _mjDat=mj_makeData(_model);
+        _mjModel=mj_loadXML((mj_xml_file).c_str(), NULL, error, 1000);
+        _mjData=mj_makeData(_mjModel);
         // mj_resetDataKeyframe(_model, _mjDat, 0);
         
     }
@@ -35,8 +33,8 @@ class MujocoSimulationBridge{
         mjv_freeScene(&mj_scene);
         mjr_freeContext(&mj_context);
 
-        mj_deleteData(_mjDat);
-        mj_deleteModel(_model);
+        mj_deleteData(_mjData);
+        mj_deleteModel(_mjModel);
         
         glfwTerminate();
     }
@@ -62,8 +60,8 @@ class MujocoSimulationBridge{
         mjv_defaultOption(&viz_opt);
         mjv_defaultScene(&mj_scene);
         mjr_defaultContext(&mj_context);
-        mjv_makeScene(_model, &mj_scene, 2000);                
-        mjr_makeContext(_model, &mj_context, mjFONTSCALE_150);
+        mjv_makeScene(_mjModel, &mj_scene, 2000);                
+        mjr_makeContext(_mjModel, &mj_context, mjFONTSCALE_150);
 
         // mj_cam.type = mjCAMERA_TRACKING;  // Tracking camera (optional)
         // mj_cam.trackbodyid = 0;           // The body id to track (e.g., the robot base)
@@ -98,13 +96,13 @@ class MujocoSimulationBridge{
         //     instance->control_callback(m, d);
         // };
 
-        _model->opt.gravity[0] = 0.0;    // Gravity in the X-axis
-        _model->opt.gravity[1] = 0.0;    // Gravity in the Y-axis
-        _model->opt.gravity[2] = -9.81; 
+        _mjModel->opt.gravity[0] = 0.0;    // Gravity in the X-axis
+        _mjModel->opt.gravity[1] = 0.0;    // Gravity in the Y-axis
+        _mjModel->opt.gravity[2] = -9.81; 
 
         //set contact options
-        _model->opt.jacobian = mjJAC_DENSE;
-        _model->opt.cone = mjCONE_ELLIPTIC; 
+        _mjModel->opt.jacobian = mjJAC_DENSE;
+        _mjModel->opt.cone = mjCONE_ELLIPTIC; 
 
          while( !glfwWindowShouldClose(mj_window))
         {
@@ -112,8 +110,8 @@ class MujocoSimulationBridge{
             //  Assuming MuJoCo can simulate faster than real-time, which it usually can,
             //  this loop will finish on time for the next frame to be rendered at 60 fps.
             //  Otherwise add a cpu timer and exit this loop when it is time to render.
-            mjtNum simstart = _mjDat->time;
-            while( _mjDat->time - simstart < 1.0/60.0 )
+            mjtNum simstart = _mjData->time;
+            while( _mjData->time - simstart < 1.0/60.0 )
             {
                 _onestep_simulation();
             }
@@ -121,7 +119,7 @@ class MujocoSimulationBridge{
             mjrRect viewport = {0, 0, 0, 0};
             glfwGetFramebufferSize(mj_window, &viewport.width, &viewport.height);
 
-            mjv_updateScene(_model, _mjDat, &viz_opt, NULL, &mj_cam, mjCAT_ALL, &mj_scene);
+            mjv_updateScene(_mjModel, _mjData, &viz_opt, NULL, &mj_cam, mjCAT_ALL, &mj_scene);
             mjr_render(viewport, &mj_scene, &mj_context);
 
             glfwSwapBuffers(mj_window);
@@ -132,7 +130,7 @@ class MujocoSimulationBridge{
             glfwGetCursorPos(mj_window, &xpos, &ypos);
 
             // Call the function to handle rotation and panning
-            handleMouseMovement(mj_window, xpos, ypos, _model, mj_scene, mj_cam);
+            handleMouseMovement(mj_window, xpos, ypos, _mjModel, mj_scene, mj_cam);
             glfwSwapBuffers(mj_window);
            
         }
@@ -190,21 +188,23 @@ void handleScroll(GLFWwindow* window, double xoffset, double yoffset, mjModel* m
     mjv_moveCamera(m, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &scn, &cam);
 }
     
-    protected:
+protected:
+    mjModel* _mjModel=nullptr;
+    mjData* _mjData=nullptr;
         
-        char error[1000];
+    char error[1000];
 
-        mjvCamera mj_cam;                      
-        mjvOption viz_opt;                      
-        mjvScene mj_scene;                       
-        mjrContext mj_context;
-        GLFWwindow* mj_window;
+    mjvCamera mj_cam;                      
+    mjvOption viz_opt;                      
+    mjvScene mj_scene;                       
+    mjrContext mj_context;
+    GLFWwindow* mj_window;
 
-   
-         // Update State
-        virtual void _onestep_simulation() = 0;
-        // Update System State and find control input
-    private:
+
+    // Update State
+    virtual void _onestep_simulation() = 0;
+    // Update System State and find control input
+private:
 
         bool button_left = false;
         bool button_middle = false;
@@ -214,7 +214,7 @@ void handleScroll(GLFWwindow* window, double xoffset, double yoffset, mjModel* m
 
         static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
             MujocoSimulationBridge* instance = static_cast<MujocoSimulationBridge*>(glfwGetWindowUserPointer(window));
-            instance->handleScroll(window, xoffset, yoffset, instance->_model, instance->mj_scene, instance->mj_cam);
+            instance->handleScroll(window, xoffset, yoffset, instance->_mjModel, instance->mj_scene, instance->mj_cam);
         }
 };
 
