@@ -6,22 +6,14 @@
 
 class PrestoeMJSimulationBridge: public MujocoSimulationBridge{
   public:
-    PrestoeMJSimulationBridge();
+    PrestoeMJSimulationBridge(System<double> * system, const std::string & mj_xml_file);
     virtual ~PrestoeMJSimulationBridge(){}
  
   protected:
-    double _ctrl_time = 0.;
-    double _ctrl_dt = 0.002;
+    virtual void _UpdateSystemObserver();
+    virtual void _UpdateControlCommand();
+    virtual void _UpdateSystemVisualInfo();
 
-    static PrestoeMJSimulationBridge* instance;
-
-    virtual void _onestep_simulation();
-    
-    int _iter=0;
-
-    int freejoint_qpos_addr;
-    int freejoint_qvel_addr;
-    static void control_callback(const mjModel* m,mjData* d);
 };
 
 #endif

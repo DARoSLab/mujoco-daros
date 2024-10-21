@@ -1,31 +1,32 @@
 #include "PrestoeMJSimulationBridge.hpp"
 #include <Configuration.h>
 #include <PrestoeDefinition.h>
+#include <PrestoeSystem.hpp>
 
 using namespace std;
 
-PrestoeMJSimulationBridge::PrestoeMJSimulationBridge() : 
-  MujocoSimulationBridge(THIS_COM"/Robots/Prestoe/prestoe.xml")
+PrestoeMJSimulationBridge::PrestoeMJSimulationBridge(System<double> * sys, const std::string & mj_xml_file):
+  MujocoSimulationBridge(sys, mj_xml_file)
 {
   // run simulation before run controller
-  _ctrl_time += _ctrl_dt;
+  _ctrl_time += _system->getCtrlDt();
   printf("[Prestoe Mujoco Simulation Bridge] Constructed\n");
 }
 
-void PrestoeMJSimulationBridge::_onestep_simulation()
-{
-  if(_mjData->time>=_ctrl_time){
-    _ctrl_time += _ctrl_dt;
-    // _prestoe_system->runCtrl(_cmd);
-    for(size_t i(0); i<prestoe::num_act_joint; i++)
-    {
-      // _mjData->ctrl[i] = _cmd->jtorque(i);
-      _mjData->ctrl[i] = 0.; 
-    }
-  }
-  mj_step(_mjModel, _mjData);
 
-  _iter++;
+void PrestoeMJSimulationBridge::_UpdateSystemObserver(){
+  // _system->_obs_manager.updateObserver();
+}
+
+void PrestoeMJSimulationBridge::_UpdateControlCommand(){
+  for(size_t i(0); i<prestoe::num_act_joint; i++)
+  {
+    _mjData->ctrl[i] = 0.;
+  }
+}
+
+void PrestoeMJSimulationBridge::_UpdateSystemVisualInfo(){
+  // _system->_vis_manager.updateVisual();
 }
 
 // void PrestoeMJSimulationBridge::setInitKeyframe(){

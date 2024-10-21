@@ -6,7 +6,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/CtrlState)
 #             CtrlState/StateMachineCtrl.cpp
 #             CtrlState/JPosCtrlState.cpp)
 
-add_library(ctrl_test PrestoeMJSimulationBridge.cpp)
+add_library(ctrl_test PrestoeMJSimulationBridge.cpp PrestoeSystem.cpp)
 target_link_libraries(ctrl_test mujoco glfw)
 
 add_executable(run_prestoe main.cpp)
