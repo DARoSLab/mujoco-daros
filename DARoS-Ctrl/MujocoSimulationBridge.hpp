@@ -210,7 +210,7 @@ class MujocoSimulationBridge{
 
     double _ctrl_time = 0.0;
 
-    System<double> * _system;
+    System<double> * _system = nullptr;
 
   private:
     bool button_left = false;

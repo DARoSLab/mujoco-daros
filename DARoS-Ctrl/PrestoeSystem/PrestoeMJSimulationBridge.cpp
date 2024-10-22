@@ -1,7 +1,7 @@
 #include "PrestoeMJSimulationBridge.hpp"
 #include <Configuration.h>
 #include <PrestoeDefinition.h>
-#include <PrestoeSystem.hpp>
+#include <PrestoeObsManager.hpp>
 
 using namespace std;
 
@@ -10,12 +10,15 @@ PrestoeMJSimulationBridge::PrestoeMJSimulationBridge(System<double> * sys, const
 {
   // run simulation before run controller
   _ctrl_time += _system->getCtrlDt();
+  _prestoe_sys = dynamic_cast<PrestoeSystem<double>*>(sys);
+  _prestoe_sys->_obs_manager = new PrestoeObsManager<double>(_mjData);
+  _prestoe_sys->_state_ctrl = new StateMachineCtrl<double>(_prestoe_sys->_obs_manager);
   printf("[Prestoe Mujoco Simulation Bridge] Constructed\n");
 }
 
 
 void PrestoeMJSimulationBridge::_UpdateSystemObserver(){
-  // _system->_obs_manager.updateObserver();
+  _prestoe_sys->_obs_manager->UpdateObservers();
 }
 
 void PrestoeMJSimulationBridge::_UpdateControlCommand(){

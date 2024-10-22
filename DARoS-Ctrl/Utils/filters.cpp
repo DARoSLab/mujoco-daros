@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <Utilities/filters.h>
+#include <filters.h>
 
 #define BUDDA_Q_SCALE 6.f
 

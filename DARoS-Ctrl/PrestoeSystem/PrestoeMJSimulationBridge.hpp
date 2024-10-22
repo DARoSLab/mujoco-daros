@@ -3,6 +3,7 @@
 
 #include <MujocoSimulationBridge.hpp>
 #include <unistd.h>
+#include <PrestoeSystem.hpp>
 
 class PrestoeMJSimulationBridge: public MujocoSimulationBridge{
   public:
@@ -10,6 +11,7 @@ class PrestoeMJSimulationBridge: public MujocoSimulationBridge{
     virtual ~PrestoeMJSimulationBridge(){}
  
   protected:
+    PrestoeSystem<double> * _prestoe_sys;
     virtual void _UpdateSystemObserver();
     virtual void _UpdateControlCommand();
     virtual void _UpdateSystemVisualInfo();

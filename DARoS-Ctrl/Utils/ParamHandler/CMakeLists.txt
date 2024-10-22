@@ -259,13 +259,13 @@ set(_INSTALL_DESTINATIONS
 ###
 ### Library
 ###
-add_library(daros_yaml-cpp SHARED ${library_sources})
-add_library(daros-param_handler SHARED ParamHandler.hpp ParamHandler.cpp)
+# add_library(daros_yaml-cpp SHARED ${library_sources})
+# add_library(daros_param_handler SHARED ParamHandler.hpp ParamHandler.cpp)
 
-#add_library(daros_yaml-cpp STATIC ${library_sources})
-#add_library(daros_param_handler STATIC ParamHandler.hpp ParamHandler.cpp)
+add_library(daros_yaml-cpp STATIC ${library_sources})
+add_library(daros_param_handler STATIC ParamHandler.hpp ParamHandler.cpp)
 
-target_link_libraries(daros-param_handler daros_yaml-cpp)
+target_link_libraries(daros_param_handler daros_yaml-cpp)
 set_target_properties(daros_yaml-cpp PROPERTIES
   COMPILE_FLAGS "${yaml_cxx_flags}"
   )

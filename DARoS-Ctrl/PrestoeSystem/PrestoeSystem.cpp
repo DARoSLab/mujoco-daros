@@ -9,6 +9,7 @@ PrestoeSystem<T>::PrestoeSystem(const std::string & setup_file): System<T>(setup
 template <typename T>
 void PrestoeSystem<T>::runCtrl()
 {
+  _state_ctrl->RunState();
 }
 
 template <typename T>
