@@ -1,0 +1,4 @@
+struct user_input_lcmt
+{
+  int64_t control_mode;
+}

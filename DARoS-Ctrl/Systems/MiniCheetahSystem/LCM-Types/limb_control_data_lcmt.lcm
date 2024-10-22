@@ -1,0 +1,6 @@
+struct limb_control_data_lcmt {
+    float q[16];
+    float qd[16];
+    float tau_est[16];
+    float tau_act[16];
+}

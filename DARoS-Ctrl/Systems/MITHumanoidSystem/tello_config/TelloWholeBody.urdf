@@ -1,0 +1,377 @@
+<?xml version="1.0" ?>
+<robot name="TELLO_CA" xmlns:xacro="http://ros.org/wiki/xacro">
+	<link name="Torso">
+		<inertial>
+			<mass value="7.4074"/>
+			<origin xyz="0.000820 -0.000510 0.068490"/>
+			<inertia ixx="0.123392842" ixy="0.000011418" ixz="0.000282641" iyy="0.051124300" iyz="0.000590704" izz="0.094184572"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="torso.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+    <!--!!!!!!!!!!!! Right Leg !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->	
+	<link name="Clamp_R">
+		<inertial>
+			<mass value="1.4131"/>
+			<origin xyz="-0.000810 0.000000 -0.006030"/>
+			<inertia ixx="0.002472479" ixy="-0.000000366" ixz="0.000094749" iyy="0.003130312" iyz="-0.000000557" izz="0.002036107"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="hip_clamp.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Gimbal_R">
+		<inertial>
+			<mass value="0.3254"/>
+			<origin xyz="-0.001740 0.000000 0.013670"/>
+			<inertia ixx="0.001224110" ixy="0.000000000" ixz="-0.000003658" iyy="0.001044265" iyz="0.000000001" izz="0.001251193"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="gimbal.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Thigh_R">
+		<inertial>
+			<mass value="1.7853"/>
+			<origin xyz="0.002550 0.000090 -0.031440"/>
+			<inertia ixx="0.010461455" ixy="0.000001132" ixz="-0.000491316" iyy="0.009194887" iyz="-0.000012977" izz="0.003561817"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="thigh.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Shank_R">
+		<inertial>
+			<mass value="0.3467"/>
+			<origin xyz="0.005400 0.000160 -0.111540"/>
+			<inertia ixx="0.002225343" ixy="0.000000444" ixz="-0.000005222" iyy="0.002222989" iyz="0.000000696" izz="0.000144341"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="shank.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Foot_R">
+		<inertial>
+			<mass value="0.1203"/>
+			<origin xyz="-0.006900 0.000020 -0.012180"/>
+			<inertia ixx="0.000042704" ixy="-0.000000041" ixz="-0.000009307" iyy="0.000101251" iyz="0.000000053" izz="0.000069551"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="foot.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+<!--!!!!!!!!!!!! Left Leg !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+	<link name="Clamp_L">
+		<inertial>
+			<mass value="1.4131"/>
+			<origin xyz="-0.000810 0.000000 -0.006030"/>
+			<inertia ixx="0.002472479" ixy="-0.000000366" ixz="0.000094749" iyy="0.003130312" iyz="-0.000000557" izz="0.002036107"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="hip_clamp.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Gimbal_L">
+		<inertial>
+			<mass value="0.3254"/>
+			<origin xyz="-0.001740 0.000000 0.013670"/>
+			<inertia ixx="0.001224110" ixy="0.000000000" ixz="-0.000003658" iyy="0.001044265" iyz="0.000000001" izz="0.001251193"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="gimbal.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Thigh_L">
+		<inertial>
+			<mass value="1.7853"/>
+			<origin xyz="0.002550 0.000090 -0.031440"/>
+			<inertia ixx="0.010461455" ixy="0.000001132" ixz="-0.000491316" iyy="0.009194887" iyz="-0.000012977" izz="0.003561817"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="thigh.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Shank_L">
+		<inertial>
+			<mass value="0.3467"/>
+			<origin xyz="0.005400 0.000160 -0.111540"/>
+			<inertia ixx="0.002225343" ixy="0.000000444" ixz="-0.000005222" iyy="0.002222989" iyz="0.000000696" izz="0.000144341"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="shank.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="Foot_L">
+		<inertial>
+			<mass value="0.1203"/>
+			<origin xyz="-0.006900 0.000020 -0.012180"/>
+			<inertia ixx="0.000042704" ixy="-0.000000041" ixz="-0.000009307" iyy="0.000101251" iyz="0.000000053" izz="0.000069551"/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="foot.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+	<joint name="A_HML_R" type="continuous">
+		<axis xyz="0 0 1"/>
+		<origin rpy="0 0 0" xyz="0.0000 -0.1000 -0.0825"/>
+		<parent link="Torso"/>
+		<child link="Clamp_R"/>
+	</joint>
+	<joint name="HAA_R" type="continuous">
+		<axis xyz="1 0 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 -0.1425"/>
+		<parent link="Clamp_R"/>
+		<child link="Gimbal_R"/>
+	</joint>
+	<joint name="HFE_R" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 0.0000"/>
+		<parent link="Gimbal_R"/>
+		<child link="Thigh_R"/>
+	</joint>
+	<joint name="KFE_R" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 -0.2286"/>
+		<parent link="Thigh_R"/>
+		<child link="Shank_R"/>
+	</joint>
+	<joint name="AFE_R" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 -0.2600"/>
+		<parent link="Shank_R"/>
+		<child link="Foot_R"/>
+	</joint>
+	<joint name="HML_L" type="continuous">
+		<axis xyz="0 0 1"/>
+		<!-- <origin rpy="0 0 0" xyz="0.0000 0.1000 -0.1035"/> -->
+		<origin rpy="0 0 0" xyz="0.0000 0.1000 -0.0825"/>		
+		<parent link="Torso"/>
+		<child link="Clamp_L"/>
+	</joint>
+	<joint name="HAA_L" type="continuous">
+		<axis xyz="1 0 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 -0.1425"/>
+		<parent link="Clamp_L"/>
+		<child link="Gimbal_L"/>
+	</joint>
+	<joint name="HFE_L" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 0.0000"/>
+		<parent link="Gimbal_L"/>
+		<child link="Thigh_L"/>
+	</joint>
+	<joint name="KFE_L" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 -0.2286"/>
+		<parent link="Thigh_L"/>
+		<child link="Shank_L"/>
+	</joint>
+	<joint name="AFE_L" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0.0000 0.0000 -0.2600"/>
+		<parent link="Shank_L"/>
+		<child link="Foot_L"/>
+	</joint>
+
+<!--!!!!!!!!!!!! Right Arm !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+	<joint name="shoulder_roll_R" type="continuous">
+		<axis xyz="1 0 0"/>
+		<origin rpy="0 0 0" xyz="0 -0.1200 0.11596"/>
+		<parent link="Torso"/>
+		<child link="Shoulder1_R"/>
+	</joint>
+	
+	<link  name = 'Shoulder1_R'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.52779726"/>
+            <inertia ixx="2697.87723e-6" ixy="0.00139e-6" ixz="0.00649e-6" iyy="1619.78254e-6" iyz="0.00071e-6" izz="3232.40775e-6"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="shoulder1_R.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+
+	<joint name="shoulder_yaw_R" type="continuous">
+		<axis xyz="0 0 1"/>
+		<origin rpy="0.334405 0 0" xyz="0 0 0"/>
+		<parent link="Shoulder1_R"/>
+		<child link="Shoulder2_R"/>
+	</joint>
+
+	<link  name = 'Shoulder2_R'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.32779726"/>
+            <inertia ixx="2697.87723e-6" ixy="0.00139e-6" ixz="0.00649e-6" iyy="1619.78254e-6" iyz="0.00071e-6" izz="3232.40775e-6"/>
+            <origin rpy="0 0 0" xyz="0 -0.02 0"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="shoulder2_R.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+
+	<joint name="shoulder_pitch_R" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="-0.334405 0 0" xyz="0 -0.093535 0.032499"/>
+		<parent link="Shoulder2_R"/>
+		<child link="UpperArm_R"/>
+	</joint>
+
+	<link name = 'UpperArm_R'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.42779726"/>
+            <inertia ixx="6420.63869e-6" ixy="0.00041e-6" ixz="-181.35138e-6" iyy="6415.19587e-6" iyz="-0.00667e-6" izz="288.04419e-6"/>
+            <origin rpy="0 0 0" xyz="0 0 -0.09"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="upperarm.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+	<joint name="elbow_R" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0 0 -0.235"/>
+		<parent link="UpperArm_R"/>
+		<child link="LowerArm_R"/>
+	</joint>
+
+	<link name = 'LowerArm_R'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.42779726"/>
+            <inertia ixx="7171.18547e-6" ixy="-0.10043e-6" ixz="0.83789e-6" iyy="7165.85626e-6" iyz="-92.88938e-6" izz="300.04551e-6"/>
+            <origin rpy="0 0 0" xyz="0 0 -0.06"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="lowerarm.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+
+
+<!--!!!!!!!!!!!! Left Arm !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+
+	<joint name="shoulder_roll_L" type="continuous">
+		<axis xyz="1 0 0"/>
+		<origin rpy="0 0 0" xyz="0 0.1200 0.11596"/>
+		<parent link="Torso"/>
+		<child link="Shoulder1_L"/>
+	</joint>
+
+	<link  name = 'Shoulder1_L'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.52779726"/>
+            <inertia ixx="2697.87723e-6" ixy="-0.00139e-6" ixz="0.00649e-6" iyy="1619.78254e-6" iyz="-0.00071e-6" izz="3232.40775e-6"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="shoulder1_L.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+	<joint name="shoulder_yaw_L" type="continuous">
+		<axis xyz="0 0 1"/>
+		<origin rpy="-0.334405 0 0" xyz="0 0 0"/>
+		<parent link="Shoulder1_L"/>
+		<child link="Shoulder2_L"/>
+	</joint>
+
+	<link  name = 'Shoulder2_L'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.32779726"/>
+            <inertia ixx="2697.87723e-6" ixy="-0.00139e-6" ixz="0.00649e-6" iyy="1619.78254e-6" iyz="-0.00071e-6" izz="3232.40775e-6"/>
+			<origin rpy="0 0 0" xyz="0 0.02 0"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="shoulder2_L.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+	<joint name="shoulder_pitch_L" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0.334405 0 0" xyz="0 0.093535 0.032499"/>
+		<parent link="Shoulder2_L"/>
+		<child link="UpperArm_L"/>
+	</joint>
+
+	<link name = 'UpperArm_L'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.42779726"/>
+            <inertia ixx="6420.63869e-6" ixy="0.00041e-6" ixz="-181.35138e-6" iyy="6415.19587e-6" iyz="-0.00667e-6" izz="288.04419e-6"/>
+            <origin rpy="0 0 0" xyz="0 0 -0.09"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="upperarm.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+
+
+	<joint name="elbow_L" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="0 0 -0.235"/>
+		<parent link="UpperArm_L"/>
+		<child link="LowerArm_L"/>
+	</joint>
+
+	<link name = 'LowerArm_L'>
+        <inertial>
+		<!--!! Simon arbiturary decides !!-->
+            <mass value="0.42779726"/>
+            <inertia ixx="7171.18547e-6" ixy="0.10043e-6" ixz="0.83789e-6" iyy="7165.85626e-6" iyz="92.88938e-6" izz="300.04551e-6"/>
+            <origin rpy="0 0 0" xyz="0 0 -0.06"/>
+        </inertial>
+		<visual>
+			<geometry>
+				<mesh filename="lowerarm.dae" scale="1 1 1"/>
+			</geometry>
+		</visual>
+	</link>
+</robot>

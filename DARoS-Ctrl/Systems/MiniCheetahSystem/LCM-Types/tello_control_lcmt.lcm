@@ -1,0 +1,4 @@
+struct tello_control_lcmt 
+{
+    float vel;
+}

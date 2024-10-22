@@ -1,0 +1,11 @@
+struct loco2dOpti_lcmt
+{
+    double body_pos[2];
+    double theta;
+
+    double r_under_contact;
+    double r_contact_pos;
+    double l_under_contact;
+    double l_contact_pos;
+}
+

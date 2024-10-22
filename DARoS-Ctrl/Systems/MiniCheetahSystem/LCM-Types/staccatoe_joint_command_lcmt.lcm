@@ -1,0 +1,8 @@
+struct staccatoe_joint_command_lcmt 
+{
+    float tau_ff[6];
+    float q_des[6];
+    float qd_des[6];
+    float kp_joint[6];
+    float kd_joint[6];
+}

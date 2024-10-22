@@ -1,0 +1,5 @@
+struct terrain2d_lcmt
+{
+    double floor[20000];
+}
+

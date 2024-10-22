@@ -1,0 +1,9 @@
+struct pat_mocap_est_lcmt
+{
+   double bodyOrientation[4];
+   double bodyPosition[3];
+   double bodyVelocity[3];
+   double lf_pos[3];
+   double rf_pos[3];
+   int64_t time_stamp;
+}

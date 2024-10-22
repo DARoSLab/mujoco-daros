@@ -1,0 +1,15 @@
+struct pat_mocap_kin_lcmt
+{
+   double lf_pos_kin[3];
+   double rf_pos_kin[3];
+   double lf_pos_mocap[3];
+   double rf_pos_mocap[3];
+   double lf_pos_mocap_raw[3];
+   double rf_pos_mocap_raw[3];
+   double body_pos_kin[3];
+   double body_pos_mocap[3];
+   double lf_pos_in_stance[3];
+   double rf_pos_in_stance[3];
+   int64_t stance_foot_index;
+
+}

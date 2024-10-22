@@ -1,0 +1,8 @@
+struct prestoe_joint_command_lcmt 
+{
+    float tau_ff[25];
+    float q_des[25];
+    float qd_des[25];
+    float kp_joint[25];
+    float kd_joint[25];
+}

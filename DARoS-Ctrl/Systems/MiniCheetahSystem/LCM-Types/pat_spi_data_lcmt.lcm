@@ -1,0 +1,11 @@
+struct pat_spi_data_lcmt
+{
+    float q_abad[2];
+    float q_hip[2];
+    float q_knee[2];
+    float qd_abad[2];
+    float qd_hip[2];
+    float qd_knee[2];
+    int32_t flags[2];
+    int32_t spi_driver_status;
+}

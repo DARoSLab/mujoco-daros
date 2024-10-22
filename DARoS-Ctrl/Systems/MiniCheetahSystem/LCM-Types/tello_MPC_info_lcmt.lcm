@@ -1,0 +1,21 @@
+struct tello_MPC_info_lcmt
+{
+  int64_t horizon;
+  double x[20];
+  double y[20];
+  double z[20];
+  double dx[20];
+  double dy[20];
+  double dz[20];
+  double roll[20];
+  double pitch[20];
+  double yaw[20];
+  double wx[20];
+  double wy[20];
+  double wz[20];
+  double RToeZ[20];
+  double RHeelZ[20];
+  double LToeZ[20];
+  double LHeelZ[20];
+
+}

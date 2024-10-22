@@ -1,0 +1,9 @@
+struct pat_ik_tracking_lcmt
+{
+  double q[6];
+  double qdes[6];
+  double error[6];
+  double lf_pos[3];
+  double rf_pos[3];
+  double com_pos[3];
+}

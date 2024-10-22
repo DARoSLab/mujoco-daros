@@ -1,0 +1,11 @@
+Kp_ori            : [150, 150, 150]
+Kd_ori            : [3, 3, 3]
+Kp_body           : [200, 200, 200]
+Kd_body           : [3, 3, 3]
+Kp_joint          : 200
+Kd_joint          : 3
+
+MAX_REACTION_FORCE    : 584.539834      # 18.8114 * 9.81
+FloatingBaseWeight    : 0.1
+REACTION_FORCE_Z_WEIGHT : 10
+REACTION_FORCE_X_WEIGHT : 1

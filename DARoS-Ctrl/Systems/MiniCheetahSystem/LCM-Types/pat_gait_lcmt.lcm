@@ -1,0 +1,8 @@
+struct pat_gait_lcmt
+{
+    float contact_state[2];
+    float swing_state[2];
+    float swing_time[2];
+    float swing_time_remaining[2];
+    float phase;
+}

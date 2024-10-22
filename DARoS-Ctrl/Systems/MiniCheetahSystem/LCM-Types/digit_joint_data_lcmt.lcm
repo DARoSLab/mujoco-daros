@@ -1,0 +1,7 @@
+struct digit_joint_data_lcmt 
+{
+    float q[22];
+    float qd[22];
+    float tau_est[22];
+    float tau_act[22];
+}

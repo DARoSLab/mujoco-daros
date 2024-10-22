@@ -1,0 +1,9 @@
+#include <common/estimators/ContactEstimator.h>
+#include <common/estimators/IMUTypes.h>
+#include <common/estimators/LocalizationTypes.h>
+#include <common/estimators/NoiseParams.h>
+#include <common/estimators/NoiseParams.h>
+#include <PatOrientationEstimator.h>
+#include <MoCapEstimator.h>
+#include <common/estimators/StateEstimatorContainer.h>
+#include <common/estimators/EstimatorParameters.hpp>

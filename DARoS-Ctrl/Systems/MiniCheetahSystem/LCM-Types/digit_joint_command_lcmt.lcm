@@ -1,0 +1,8 @@
+struct digit_joint_command_lcmt 
+{
+    float tau_ff[22];
+    float q_des[22];
+    float qd_des[22];
+    float kp_joint[22];
+    float kd_joint[22];
+}

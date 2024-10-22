@@ -1,0 +1,7 @@
+struct tello_joint_data_lcmt 
+{
+    float q[18];
+    float qd[18];
+    float tau_est[18];
+    float tau_act[18];
+}

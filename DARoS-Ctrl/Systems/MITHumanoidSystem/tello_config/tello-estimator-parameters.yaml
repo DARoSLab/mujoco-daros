@@ -1,0 +1,17 @@
+__collection-name__: estimator-parameters
+
+estimator_dt     : 0.002
+foot_height_sensor_noise      :  0.001
+foot_process_noise_position   :  0.002
+foot_sensor_noise_position    :  0.001
+foot_sensor_noise_velocity    :  0.1
+imu_process_noise_position    :  0.02
+imu_process_noise_velocity    :  0.02
+mu_p_c                        :  [0.0, 1.0, -1.0]
+mu_p_s                        :  [0.0, 1.0,-1.0]
+mu_z_g                        :  0.0
+mu_f_c                        :  0.025
+var_p_c                       :  [0.05, 0.05,-1.0]
+var_p_s                       :  [0.05, 0.05,-1.0]
+var_z_g                       :  35.0
+var_f_c                       :  50.0
