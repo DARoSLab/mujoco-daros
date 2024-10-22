@@ -117,7 +117,10 @@ class MujocoSimulationBridge{
             // Call the function to handle rotation and panning
             handleMouseMovement(mj_window, xpos, ypos, _mjModel, mj_scene, mj_cam);
             glfwSwapBuffers(mj_window);
+            
+            #ifdef __APPLE__
             glfwSwapBuffers(mj_window);
+            #endif
            
         }
     }

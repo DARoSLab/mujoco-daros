@@ -2,6 +2,7 @@
 #define __STATE_MACHINE_CTRL_H__
 
 #include <iostream>
+#include <vector>
 
 enum StateList {
   PASSIVE = 0,
