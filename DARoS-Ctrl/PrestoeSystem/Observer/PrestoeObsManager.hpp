@@ -32,18 +32,18 @@ template<typename T>
 class CheaterModeObserver: public Observer<T>{
   public:
     CheaterModeObserver(mjData* data):
-    _q(prestoe::nDOF+1), _dq(prestoe::nDOF){ 
+    _q(prestoe::nDoF+1), _dq(prestoe::nDoF){ 
       _mjData = data; 
       printf("[CheaterModeObserver] Constructed\n");
     }
     virtual ~CheaterModeObserver(){ }
 
     virtual void Update(){
-      for(size_t i(0); i<prestoe::nDOF; i++){
+      for(size_t i(0); i<prestoe::nDoF; i++){
         _q[i] = static_cast<T>(_mjData->qpos[i]);
         _dq[i] = static_cast<T>(_mjData->qvel[i]);
       }
-      _q[prestoe::nDOF] = _mjData->qpos[prestoe::nDOF];
+      _q[prestoe::nDoF] = _mjData->qpos[prestoe::nDoF];
     }
     virtual void PrintInfo(){
       pretty_print(_q, std::cout, "CheaterModeObserver: _q");

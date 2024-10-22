@@ -14,18 +14,14 @@ State<T>(sys){
 }
 
 template <typename T>
-void JPosCtrlState<T>::Initialize() {
-}
-
-template <typename T>
 void JPosCtrlState<T>::OnEnter() {
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
 
   this->_jpos_ini = cheater_mode_obs->_q.tail(prestoe::num_act_joint);
-  // pretty_print(_jpos_ini, std::cout, "JPosCtrlState: _jpos_ini");
   this->_state_time = 0.0;
+  // pretty_print(_jpos_ini, std::cout, "JPosCtrlState: _jpos_ini");
 }
 
 template <typename T>
@@ -40,6 +36,7 @@ void JPosCtrlState<T>::RunNominal() {
     target_jpos = (1.0 - curr_time / init_move_duration) * this->_jpos_ini + 
                     (curr_time / init_move_duration) * this->_jpos_default;
     target_vel = DVec<T>::Zero(prestoe::num_act_joint);
+
   }else{
     T swing_time = curr_time - init_move_duration;
     DVec<T> sin_vec = (2.0*M_PI*_swing_freq * swing_time).array().sin();

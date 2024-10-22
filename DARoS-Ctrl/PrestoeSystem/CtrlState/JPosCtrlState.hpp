@@ -10,9 +10,10 @@ template <typename T>
 class JPosCtrlState : public State<T> {
   public:
     JPosCtrlState(ObserverManager<T>* obs_manager, PrestoeSystem<T>* prestoe_system);
-    virtual ~JPosCtrlState(){}
+    virtual ~JPosCtrlState(){
+      delete _jtorque_cmd;
+    }
 
-    virtual void Initialize();
     virtual void OnEnter(); 
     virtual void RunNominal();
     virtual Command<T>* GetCommand() { return _jtorque_cmd; }
