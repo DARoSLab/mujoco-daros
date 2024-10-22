@@ -1,13 +1,12 @@
 #include "StateMachineCtrl.hpp"
+#include <PrestoeObsManager.hpp>
 #include "JPosCtrlState.hpp"
 
 template <typename T>
-StateMachineCtrl<T>::StateMachineCtrl(ObserverManager<T>* obs_manager):
-_obs_manager(obs_manager)
-{
+StateMachineCtrl<T>::StateMachineCtrl(ObserverManager<T>* obs_manager, PrestoeSystem<T>* sys) {
   // Initialize and add all of the FSM States to the state list
   _state_list.resize(StateList::NUM_STATE);
-  _state_list[StateList::JOINT_PD] = new JPosCtrlState<T>(obs_manager);
+  _state_list[StateList::JOINT_PD] = new JPosCtrlState<T>(obs_manager, sys);
   
   printf("[State Machine Control] Constructed\n");
   _Initialize();
@@ -30,7 +29,6 @@ void StateMachineCtrl<T>::RunState() {
   }
   _curr_State->RunNominal();
 }
-
 
 template class StateMachineCtrl<float>;
 template class StateMachineCtrl<double>;

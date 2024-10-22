@@ -66,6 +66,7 @@ function(add_sources)
   set_property(GLOBAL APPEND PROPERTY SRCS_LIST "${SRCS}")
 endfunction(add_sources)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../")
 set(header_directory "${CMAKE_CURRENT_SOURCE_DIR}/daros_yaml-cpp/")
 
 file(GLOB sources "src/[a-zA-Z]*.cpp")

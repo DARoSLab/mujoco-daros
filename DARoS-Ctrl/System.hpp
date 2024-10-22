@@ -13,7 +13,7 @@ class System {
     T getCtrlDt() { return _ctrl_dt; }
 
   protected:
-      T _ctrl_dt = 0.001;
+    T _ctrl_dt = 0.001;
 };
 
 

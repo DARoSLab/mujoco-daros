@@ -2,7 +2,6 @@
 #define __STATE_MACHINE_CTRL_H__
 
 #include <iostream>
-#include <PrestoeObsManager.hpp>
 
 enum StateList {
   PASSIVE = 0,
@@ -12,21 +11,18 @@ enum StateList {
   NUM_STATE
 };
 
-template<typename T> class State;
-template<typename T> class ObserverManager;
+template <typename T> class ObserverManager;
+template <typename T> class PrestoeSystem;
+template <typename T> class State;
 
 template <typename T>
 class StateMachineCtrl{
   public:
     // Initialize for Quadruped
-    StateMachineCtrl(ObserverManager<T>* obs_manager); 
-
+    StateMachineCtrl(ObserverManager<T>* obs_manager, 
+                     PrestoeSystem<T>* prestoe_system); 
     void RunState();
-    void printInfo(int opt);
-
-  private:
     void _Initialize();
-    ObserverManager<T>* _obs_manager;
 
     int iter = 0;
     std::vector<State<T> *> _state_list;
@@ -34,7 +30,6 @@ class StateMachineCtrl{
     State<T>* _next_State;       // next FSM state
 
     bool _b_first_visit = true;
-
 };
 
 #endif  // CONTROLFSM_H

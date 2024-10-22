@@ -4,6 +4,7 @@
 #include <daros_yaml-cpp/yaml.h>
 #include <string>
 #include <vector>
+#include <cppTypes.h>
 
 class ParamHandler {
 public:
@@ -25,7 +26,19 @@ public:
   }
 
   template<typename T>
-  bool getVector(const std::string &category, const std::string &key, std::vector<T> &vec_value) {
+  bool getEigenVec(const std::string & key, DVec<T> & vec_value) {
+    try {
+      std::vector<T> vec = config_[key].as<std::vector<T> >();
+      vec_value = Eigen::Map<DVec<T> >(vec.data(), vec.size());
+    } catch (std::exception &e) {
+      return false;
+    }
+    return true;
+  }
+
+  template<typename T>
+  bool getVector(const std::string &category, const std::string &key, 
+  std::vector<T> &vec_value) {
     try {
       vec_value = config_[category][key].as<std::vector<T>>();
     } catch (std::exception &e) {
@@ -35,7 +48,8 @@ public:
   }
 
   template<typename T>
-  bool get2DArray(const std::string &category, const std::string &key, std::vector<std::vector<T> > &vec_value) {
+  bool get2DArray(const std::string &category, const std::string &key, 
+  std::vector<std::vector<T> > &vec_value) {
     try {
       vec_value = config_[category][key].as<std::vector<std::vector<T> > >();
     } catch (std::exception &e) {

@@ -2,6 +2,8 @@
 #include <Configuration.h>
 #include <PrestoeDefinition.h>
 #include <PrestoeObsManager.hpp>
+#include <Command.hpp>
+#include <State.hpp>
 
 using namespace std;
 
@@ -12,7 +14,7 @@ PrestoeMJSimulationBridge::PrestoeMJSimulationBridge(System<double> * sys, const
   _ctrl_time += _system->getCtrlDt();
   _prestoe_sys = dynamic_cast<PrestoeSystem<double>*>(sys);
   _prestoe_sys->_obs_manager = new PrestoeObsManager<double>(_mjData);
-  _prestoe_sys->_state_ctrl = new StateMachineCtrl<double>(_prestoe_sys->_obs_manager);
+  _prestoe_sys->_state_ctrl = new StateMachineCtrl<double>(_prestoe_sys->_obs_manager, _prestoe_sys);
   printf("[Prestoe Mujoco Simulation Bridge] Constructed\n");
 }
 
@@ -22,9 +24,10 @@ void PrestoeMJSimulationBridge::_UpdateSystemObserver(){
 }
 
 void PrestoeMJSimulationBridge::_UpdateControlCommand(){
+  Command<double>* cmd = _prestoe_sys->_state_ctrl->_curr_State->GetCommand();
   for(size_t i(0); i<prestoe::num_act_joint; i++)
   {
-    _mjData->ctrl[i] = 0.;
+    _mjData->ctrl[i] = (dynamic_cast<JTorqueCommand<double>*>(cmd))->_jtorque_cmd[i];
   }
 }
 
