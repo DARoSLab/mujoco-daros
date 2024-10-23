@@ -23,7 +23,7 @@ add_library(prestoe_ctrl_lib STATIC
                       ${WBC_SRC}
                       )
 
-target_link_libraries(prestoe_ctrl_lib daros-utils daros-common)
+target_link_libraries(prestoe_ctrl_lib daros-utils daros-ctrl-utils lcm)
 
 add_executable(run_prestoe main.cpp PrestoeMJSimulationBridge.cpp)
 target_link_libraries(run_prestoe mujoco glfw prestoe_ctrl_lib)

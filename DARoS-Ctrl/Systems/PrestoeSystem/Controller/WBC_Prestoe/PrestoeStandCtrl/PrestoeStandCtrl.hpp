@@ -23,14 +23,15 @@ class PrestoeStandCtrl: public WBC_Ctrl<T>{
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    PrestoeStandCtrl(const FloatingBaseModel<T> * model);
+    PrestoeStandCtrl(const FloatingBaseModel<T> * model, const std::string & config_file);
     virtual ~PrestoeStandCtrl();
 
   protected:
     virtual void _ContactTaskUpdate(void * input);
-    void _ParameterSetup();
     void _CleanUp();
     virtual void _LCM_PublishData();
+
+    void _ReadConfig(const std::string & config_file);
 
     PrestoeStandCtrlData<T>* _input_data;
 

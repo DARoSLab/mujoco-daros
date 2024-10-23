@@ -4,9 +4,12 @@
 #include <WBIC_FB/TaskSet/JPosTask.hpp>
 #include <WBIC_FB/TaskSet/BodyPosTask.hpp>
 #include <WBIC_FB/TaskSet/LinkPosTask.hpp>
+#include <ParamHandler/ParamHandler.hpp>
 
 template<typename T>
-PrestoeStandCtrl<T>::PrestoeStandCtrl(const FloatingBaseModel<T> * model): WBC_Ctrl<T>(model)
+PrestoeStandCtrl<T>::PrestoeStandCtrl(const FloatingBaseModel<T> * model, 
+const std::string & config_file): 
+ WBC_Ctrl<T>(model)
 {
   _body_ori_task = new BodyOriTask<T>(this->_model);
   _jpos_task = new JPosTask<T>(this->_model);
@@ -17,6 +20,7 @@ PrestoeStandCtrl<T>::PrestoeStandCtrl(const FloatingBaseModel<T> * model): WBC_C
     _foot_contact[i] = new SingleContact<T>(this->_model, prestoe_contact::rheel + i);
     // this->_wbic_data->_W_rf[3*i+2] = 1;
   }
+  _ReadConfig(config_file);
 }
 
 template<typename T>
@@ -33,7 +37,6 @@ template<typename T>
 void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
   _input_data = static_cast<PrestoeStandCtrlData<T>* >(input);
 
-  _ParameterSetup();
   _CleanUp();
   Vec3<T> zero_vec3; zero_vec3.setZero();
 
@@ -60,8 +63,11 @@ void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
 }
 
 template<typename T>
-void PrestoeStandCtrl<T>::_ParameterSetup(){
-
+void PrestoeStandCtrl<T>::_ReadConfig(const std::string & config_file){
+  ParamHandler handler(config_file);
+  // DVec<T> dummy_vec;
+  handler.getEigenVec("WBC_Kp_body", ((BodyPosTask<T>*)_body_pos_task)->_Kp );
+  handler.getEigenVec("WBC_Kd_body", ((BodyPosTask<T>*)_body_pos_task)->_Kd );
   // for(size_t i(0); i<3; ++i){
     
   //   ((BodyOriTask<T>*)_body_ori_task)->_Kp[i] = param->Kp_ori[i];

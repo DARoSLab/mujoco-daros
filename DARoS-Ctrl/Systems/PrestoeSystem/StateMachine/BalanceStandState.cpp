@@ -13,11 +13,11 @@ BalanceStandState<T>::BalanceStandState(ObserverManager<T>* obs_manager, Prestoe
   _obs_manager(obs_manager),
   State<T>(prestoe_system){
 
-  buildFloatingBaseModelFromURDF(_fb_model, THIS_COM"/Systems/PrestoeSystem/Robot/prestoe.urdf", false);
+  buildFloatingBaseModelFromURDF(_fb_model, THIS_COM"/Systems/PrestoeSystem/Robot/prestoe_urdf.urdf", false);
   _ReadConfig(THIS_COM"/PrestoeSystem/Configs/standing_state.yaml");
   _jtorque_pos_cmd = new JTorquePosCommand<T>(prestoe::num_act_joint);
 
-  _wbc_ctrl = new PrestoeStandCtrl<T>(&_fb_model);
+  _wbc_ctrl = new PrestoeStandCtrl<T>(&_fb_model, THIS_COM"/PrestoeSystem/Configs/standing_ctrl.yaml");
   _wbc_data = new PrestoeStandCtrlData<T>();
 
   _wbc_ctrl->setFloatingBaseWeight(10000.);

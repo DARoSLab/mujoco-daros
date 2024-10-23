@@ -1,10 +1,5 @@
-/*!
- * @file utilities.h
- * @brief Common utility functions
- */
-
-#ifndef PROJECT_UTILITIES_H
-#define PROJECT_UTILITIES_H
+#ifndef __UTILITIES_H__
+#define __UTILITIES_H__
 
 #include <algorithm>
 #include <map>
@@ -357,6 +352,9 @@ Vec6<T> stringToVec6(const std::string& str) {
   return v;
 }
 
-std::string getLcmUrl(s64 ttl);
+inline std::string getLcmUrl(s64 ttl) {
+  assert(ttl >= 0 && ttl <= 255);
+  return "udpm://239.255.76.67:7667?ttl=" + std::to_string(ttl);
+}
 
-#endif  // PROJECT_UTILITIES_H
+#endif  // _UTILITIES_H

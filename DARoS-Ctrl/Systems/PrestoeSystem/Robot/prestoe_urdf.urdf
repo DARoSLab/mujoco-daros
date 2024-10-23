@@ -1,15 +1,4 @@
-<?xml version="1.0" ?>
 <robot name="prestoe">
-
-    <!-- <link name="world"/>
-    <joint name="fixed" type="fixed">
-        <parent link="world"/>
-        <child link="torso_link"/>
-    </joint> -->
-
-
-<!--!!!!!!!!!!!! Torso !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
-   
     <link name="torso_link">
         <inertial>
             <mass value="7.3955327"/>
