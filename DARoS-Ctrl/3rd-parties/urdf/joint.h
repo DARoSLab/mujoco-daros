@@ -235,7 +235,7 @@ public:
   std::shared_ptr<JointDynamics> dynamics;
 
   /// Joint Actuator
-  std::shared_ptr<JointActuator> actuator;
+  std::shared_ptr<JointActuator> actuator = nullptr;
 
   /// Joint Limits
   std::shared_ptr<JointLimits> limits;

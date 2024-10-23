@@ -3,7 +3,7 @@
 #include <utilities.h>
 #include <ParamHandler/ParamHandler.hpp>
 #include <Command.hpp>
-#include <FBModel/parsingURDF.h>
+#include <PrestoeFBModel.h>
 
 #include <WBC_Prestoe/PrestoeStandCtrl/PrestoeStandCtrl.hpp>
 #include <PrestoeObsManager.hpp>
@@ -13,7 +13,10 @@ BalanceStandState<T>::BalanceStandState(ObserverManager<T>* obs_manager, Prestoe
   _obs_manager(obs_manager),
   State<T>(prestoe_system){
 
-  buildFloatingBaseModelFromURDF(_fb_model, THIS_COM"/Systems/PrestoeSystem/Robot/prestoe_urdf.urdf", false);
+  Prestoe<T> dummy;
+  dummy.buildFBModel(_fb_model, true);
+  _fb_state = _fb_model._state;
+
   _ReadConfig(THIS_COM"/PrestoeSystem/Configs/standing_state.yaml");
   _jtorque_pos_cmd = new JTorquePosCommand<T>(prestoe::num_act_joint);
 
@@ -28,6 +31,7 @@ BalanceStandState<T>::BalanceStandState(ObserverManager<T>* obs_manager, Prestoe
 
 template <typename T>
 void BalanceStandState<T>::OnEnter() {
+  printf("[Balance Stand] On Enter begin\n");
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
@@ -42,15 +46,19 @@ void BalanceStandState<T>::OnEnter() {
 
   _mid_pos_cps.setZero();
 
+  std::cout<<_fb_model._pGC.size()<<std::endl;
   for(size_t i(0); i<prestoe_contact::num_foot_contact; ++i){
+    printf("in\n");
+    pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
     _mid_pos_cps += _fb_model._pGC[prestoe_contact::rheel + i]/prestoe_contact::num_foot_contact;
   }
+printf("1\n");
 
   this->_state_time = 0.0;
 
   pretty_print(_ini_body_ori_rpy, std::cout, "body rpy");
   pretty_print(_mid_pos_cps, std::cout, "[Balance Stand] middle of cps");
-  std::cout << "[Balance Stand] On Enter" << std::endl;
+  std::cout << "[Balance Stand] On Enter is done" << std::endl;
 }
 
 template <typename T>
@@ -107,10 +115,12 @@ void BalanceStandState<T>::_KeepPostureStep() {
 
 template<typename T>
 void BalanceStandState<T>::_UpdateModel(){
+  printf("[Balance Stand] Update Model\n");
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
 
+  pretty_print(cheater_mode_obs->_q, std::cout, "q");
   _fb_state.bodyPosition = cheater_mode_obs->_q.head(3); 
   _fb_state.bodyOrientation = cheater_mode_obs->_q.segment(3,4); 
 
@@ -127,7 +137,7 @@ void BalanceStandState<T>::_UpdateModel(){
   pretty_print(_fb_state.bodyPosition, std::cout, "body position");
   pretty_print(_fb_state.bodyOrientation, std::cout, "body orientation");
   pretty_print(_fb_state.bodyVelocity, std::cout, "body velocity");
-  pretty_print(_fb_state.q, std::cout, "joint orientations");
+  pretty_print(_fb_state.q, std::cout, "joint positions");
   pretty_print(_fb_state.qd, std::cout, "joint velocities");
 
   _fb_model.setState(_fb_state);

@@ -2,6 +2,7 @@
 #define __PRESTOE_FLOATING_BASE_MODEL_H__ 
 
 #include <FBModel/FloatingBaseModel.h>
+#include <FBModel/parsingURDF.h>
 #include <Configuration.h>
 
 //  Foot index
@@ -13,10 +14,10 @@
 //    heel
 
 namespace prestoe_fb_link { // numbering depends on order of how contact points are added
-  constexpr size_t rfoot = 10; 
-  constexpr size_t rtoe = 11; 
-  constexpr size_t lfoot = 17; 
-  constexpr size_t ltoe = 18; 
+  constexpr size_t rfoot = 12; 
+  constexpr size_t rtoe = 13; 
+  constexpr size_t lfoot = 19; 
+  constexpr size_t ltoe = 20; 
 }
 
 namespace prestoe_contact{
@@ -46,9 +47,9 @@ namespace prestoe_contact{
 template <typename T>
 class Prestoe {
   public:
-    void buildFBModel(FloatingBaseModel<T> & model, T gravity = -9.81)
+    static void buildFBModel(FloatingBaseModel<T> & model, bool verbose = false, T gravity = -9.81)
     {
-      buildFloatingBaseModelFromURDF(model, THIS_COM"Systems/PrestoeSystem/Robot/prestoe_urdf.urdf", true);
+      buildFloatingBaseModelFromURDF(model, THIS_COM"/Systems/PrestoeSystem/Robot/prestoe_urdf.urdf", verbose);
 
       // Contact setup
       Vec3<T> offset;

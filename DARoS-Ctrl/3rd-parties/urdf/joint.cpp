@@ -470,10 +470,14 @@ bool parseJointMimic(JointMimic &jm, TiXmlElement* config)
 
 bool parseJoint(Joint &joint, TiXmlElement* config)
 {
+  bool verbose(false);
+  if(verbose) printf("joint parsing\n");
   joint.clear();
 
+  if(verbose) printf("joint cleared\n");
   // Get Joint Name
   const char *name = config->Attribute("name");
+  if(verbose) printf("name: %s\n", name);
   if (!name)
   {
     return false;
@@ -500,6 +504,8 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
   if (parent_xml)
   {
     const char *pname = parent_xml->Attribute("link");
+    if(verbose) printf("parent link: %s\n", pname);
+
     if (!pname)
     {
     }
@@ -547,7 +553,6 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
   {
     return false;
   }
-
   // Get Joint Axis
   if (joint.type != Joint::FLOATING && joint.type != Joint::FIXED)
   {
@@ -636,7 +641,6 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
       return false;
     }
   }
-
   // Get Actuator
   TiXmlElement *act_xml = config->FirstChildElement("actuator");
   if(act_xml)
@@ -648,6 +652,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
       return false;
     }
   }
+  if(verbose) printf("joint parsing done\n");
   return true;
 }
 

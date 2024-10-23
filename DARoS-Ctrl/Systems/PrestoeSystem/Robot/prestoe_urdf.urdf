@@ -20,12 +20,12 @@
     </link>
 
  <joint name="torsoyaw" type="revolute">
-        <parent link="torso_link"/>
-        <child link="pelvis"/>
-        <axis xyz="0 0 1"/>
-        <origin rpy="0 0 0" xyz="0.0 0.0 -44.5e-3"/>
-        <limit effort="1000" lower="-1.57079632679" upper="1.57079632679" velocity="20"/>
-    </joint>
+      <parent link="torso_link"/>
+      <child link="pelvis"/>
+      <axis xyz="0 0 1"/>
+      <origin rpy="0 0 0" xyz="0.0 0.0 -44.5e-3"/>
+      <limit effort="1000" lower="-1.57079632679" upper="1.57079632679" velocity="20"/>
+  </joint>
 
     <link name="pelvis">
         <inertial>
@@ -47,13 +47,12 @@
         </collision>
     </link>
 
-    <!--!!!!!!!!!!!! Right Leg !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
     <joint name="R_hipyaw" type="revolute">
         <parent link="pelvis"/>
         <child link="R_hipyaw_link"/>
         <axis xyz="0 0 1"/>
-        <origin rpy="-0.2618  0  0" xyz="0 -54.71371e-3 -48.37244e-3"/>
-        <!--includes -15 degree tilt, and convert mm to m-->
+        <origin rpy="-0.2618 0 0" xyz="0 -54.71371e-3 -48.37244e-3"/>
+        <!-- <origin rpy="0 0 0" xyz="0.0 0.0 -44.5e-3"/> -->
         <limit lower="-1.57" upper="1.57" effort="0.0" velocity="20.0"/>
     </joint>
     <link name="R_hipyaw_link">
@@ -249,20 +248,12 @@
             </geometry>
         </collision>
     </link>
-
-
-
-
-
-
-
     <!--!!!!!!!!!!!! Left Leg !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
     <joint name="L_hipyaw" type="revolute">
         <parent link="pelvis"/>
         <child link="L_hipyaw_link"/>
         <axis xyz="0 0 1"/>
-         <origin rpy="0.2618  0  0" xyz="0 54.71371e-3 -48.37244e-3"/>
-        <!--includes 15 degree tilt, and convert mm to m-->
+        <origin rpy="0.2618 0 0" xyz="0 54.71371e-3 -48.37244e-3"/>
         <limit effort="100" lower="-1.570796" upper="1.570796" velocity="20"/>
     </joint>
     <link name="L_hipyaw_link">
