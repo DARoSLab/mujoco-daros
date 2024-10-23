@@ -14,9 +14,6 @@ class PrestoeStandCtrlData{
 
     Vec3<T> Fr_des[staccatoe_contact::num_foot_contact];
     DVec<T> jpos_des = DVec<T>::Zero(staccatoe::num_act_joint);
-    Vec3<T> pFoot_des[staccatoe_contact::num_foot_contact];
-    Vec3<T> vFoot_des[staccatoe_contact::num_foot_contact];
-    Vec3<T> aFoot_des[staccatoe_contact::num_foot_contact];
     Vec5<T> contact_state;
 };
 
@@ -41,7 +38,6 @@ class PrestoeStandCtrl: public WBC_Ctrl<T>{
     Task<T>* _jpos_task;
     Task<T>* _body_pos_task;
     Task<T>* _cam_task;
-    Task<T>* _foot_task[staccatoe_contact::num_foot_contact];
     constexpr static size_t _num_contact = staccatoe_contact::num_foot_contact;
     ContactSpec<T>* _foot_contact[_num_contact];
 

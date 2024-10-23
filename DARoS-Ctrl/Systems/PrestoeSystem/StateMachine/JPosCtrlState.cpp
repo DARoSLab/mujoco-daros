@@ -9,8 +9,9 @@ template <typename T>
 JPosCtrlState<T>::JPosCtrlState(ObserverManager<T>* ob_man, PrestoeSystem<T>* sys):
 _obs_manager(ob_man),
 State<T>(sys){
-  _ReadConfig(THIS_COM"/PrestoeSystem/Configs/jpos_state.yaml");
+  _ReadConfig(THIS_COM"/Systems/PrestoeSystem/Configs/jpos_state.yaml");
   _jtorque_cmd = new JTorqueCommand<T>(prestoe::num_act_joint);
+  printf("[JPosCtrlState] Constructed\n");
 }
 
 template <typename T>

@@ -2,7 +2,7 @@
 #define WBC_CONTROLLER_H
 
 #include <FBModel/FloatingBaseModel.h>
-#include <Robots/Prestoe.h>
+#include <Robots/PrestoeDefinition.h>
 #include <cppTypes.h>
 #include <WBIC_FB/WBIC.hpp>
 
@@ -51,8 +51,6 @@ class WBC_Ctrl{
     DVec<T> _des_jpos;
     DVec<T> _des_jvel;
 
-    //DVec<T> _jpos_ini;
-    //DVec<T> 
     std::vector<T> _Kp_joint, _Kd_joint;
     //std::vector<T> _Kp_joint_swing, _Kd_joint_swing;
 
