@@ -11,12 +11,12 @@ class JPosCtrlState : public State<T> {
   public:
     JPosCtrlState(ObserverManager<T>* obs_manager, PrestoeSystem<T>* prestoe_system);
     virtual ~JPosCtrlState(){
-      delete _jtorque_cmd;
+      delete _jpos_cmd;
     }
 
     virtual void OnEnter(); 
     virtual void RunNominal();
-    virtual Command<T>* GetCommand() { return _jtorque_cmd; }
+    virtual Command<T>* GetCommand() { return _jpos_cmd; }
 
   protected:
     void _ReadConfig(const std::string & file_name);
@@ -27,7 +27,7 @@ class JPosCtrlState : public State<T> {
     DVec<T> _swing_amp;
     DVec<T> _Kp, _Kd;
 
-    Command<T>* _jtorque_cmd;
+    Command<T>* _jpos_cmd;
 };
 
 #endif

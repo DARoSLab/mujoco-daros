@@ -2,6 +2,7 @@
 #define Prestoe_STAND_CONTROLLER
 
 #include <WBC_Prestoe/WBC_Ctrl.hpp>
+#include <PrestoeFBModel.h>
 
 template<typename T>
 class PrestoeStandCtrlData{
@@ -12,8 +13,8 @@ class PrestoeStandCtrlData{
     Vec3<T> pBody_RPY_des;
     Vec3<T> vBody_Ori_des;
 
-    Vec3<T> Fr_des[staccatoe_contact::num_foot_contact];
-    DVec<T> jpos_des = DVec<T>::Zero(staccatoe::num_act_joint);
+    Vec3<T> Fr_des[prestoe_contact::num_foot_contact];
+    DVec<T> jpos_des = DVec<T>::Zero(prestoe::num_act_joint);
     Vec5<T> contact_state;
 };
 
@@ -26,19 +27,17 @@ class PrestoeStandCtrl: public WBC_Ctrl<T>{
     virtual ~PrestoeStandCtrl();
 
   protected:
-    virtual void _ContactTaskUpdate(void * input, ControlFSMData_Prestoe<T> & data);
-    void _ParameterSetup(const PrestoeParameters* param);
+    virtual void _ContactTaskUpdate(void * input);
+    void _ParameterSetup();
     void _CleanUp();
     virtual void _LCM_PublishData();
 
     PrestoeStandCtrlData<T>* _input_data;
 
-    Task<T>* _centroid_mom_task;
     Task<T>* _body_ori_task;
     Task<T>* _jpos_task;
     Task<T>* _body_pos_task;
-    Task<T>* _cam_task;
-    constexpr static size_t _num_contact = staccatoe_contact::num_foot_contact;
+    constexpr static size_t _num_contact = prestoe_contact::num_foot_contact;
     ContactSpec<T>* _foot_contact[_num_contact];
 
     //Vec3<T> _Fr_result[humanoid::num_leg];

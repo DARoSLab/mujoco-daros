@@ -97,7 +97,7 @@ using Mat2 = typename Eigen::Matrix<T, 2, 2>;
 template <typename T>
 using Mat5 = typename Eigen::Matrix<T, 5, 5>;
 
-// 4x1 Vector
+// 4x1 Vector (w, x, y, z)
 template <typename T>
 using Quat = typename Eigen::Matrix<T, 4, 1>;
 

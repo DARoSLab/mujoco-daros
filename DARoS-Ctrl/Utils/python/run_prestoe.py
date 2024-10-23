@@ -240,7 +240,12 @@ class JPosCtrl:
       #   target_position[5] -= 2*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
     # print(target_position[7:])
 
-    # print(d.qpos)
+    # print(self.d.qpos)
+    # input("Press Enter to continue...")
+    # pause simulation
+
+
+    
     position_error = target_position - self.d.qpos
 
     # Calculate joint velocity
@@ -530,6 +535,6 @@ if __name__ == '__main__':
   dir_path = os.path.dirname(os.path.realpath(__file__))
 
   def main(argv) -> None:
-    launch_from_path(dir_path + "/../Robots/Prestoe/prestoe.xml")
+    launch_from_path(dir_path + "/../../Systems/PrestoeSystem/Robot/prestoe.xml")
 
   app.run(main)

@@ -10,7 +10,7 @@ JPosCtrlState<T>::JPosCtrlState(ObserverManager<T>* ob_man, PrestoeSystem<T>* sy
 _obs_manager(ob_man),
 State<T>(sys){
   _ReadConfig(THIS_COM"/Systems/PrestoeSystem/Configs/jpos_state.yaml");
-  _jtorque_cmd = new JTorqueCommand<T>(prestoe::num_act_joint);
+  _jpos_cmd = new JPosCommand<T>(prestoe::num_act_joint);
   printf("[JPosCtrlState] Constructed\n");
 }
 
@@ -47,12 +47,9 @@ void JPosCtrlState<T>::RunNominal() {
   }
   CheaterModeObserver<T>* cheater_mode_obs =
    dynamic_cast<CheaterModeObserver<T>*>(_obs_manager->_observers[PrestoeObsList::CheaterMode]);
-  JTorqueCommand<T>* jtorque_cmd = dynamic_cast<JTorqueCommand<T>*>(_jtorque_cmd);
+  JPosCommand<T>* jpos_cmd = dynamic_cast<JPosCommand<T>*>(_jpos_cmd);
 
-  jtorque_cmd->SetJointPDCommand(target_jpos, target_vel, 
-      cheater_mode_obs->_q.tail(prestoe::num_act_joint),
-      cheater_mode_obs->_dq.tail(prestoe::num_act_joint),
-      _Kp, _Kd);
+  jpos_cmd->SetJointCommand(target_jpos, target_vel, _Kp, _Kd);
 
   this->_state_time += this->_sys_info._ctrl_dt;
 }

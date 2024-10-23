@@ -24,10 +24,31 @@ void PrestoeMJSimulationBridge::_UpdateSystemObserver(){
 }
 
 void PrestoeMJSimulationBridge::_UpdateControlCommand(){
+  DVec<double> jtorque_output(prestoe::num_act_joint);
   Command<double>* cmd = _prestoe_sys->_state_ctrl->_curr_State->GetCommand();
-  for(size_t i(0); i<prestoe::num_act_joint; i++)
+
+  DVec<double> jpos(prestoe::num_act_joint);
+  DVec<double> jvel(prestoe::num_act_joint);
+
+  for(size_t i(0); i<prestoe::num_act_joint; ++i){
+    jpos[i] = static_cast<double>(_mjData->qpos[i + 7]);
+    jvel[i] = static_cast<double>(_mjData->qvel[i + 6]);
+  }
+ 
+  if(cmd->_type == CommandType::JPOS_CMD){
+    dynamic_cast<JPosCommand<double>*>(cmd)->ComputeTorqueCommand(jtorque_output, jpos, jvel);
+
+  }else if(cmd->_type == CommandType::JTORQUE_POS_CMD){
+    dynamic_cast<JTorquePosCommand<double>*>(cmd)->ComputeTorqueCommand(jtorque_output, jpos, jvel);
+
+  }else{
+    printf("[PrestoeMJSimulationBridge] Unknown command type\n");
+    exit(0);
+  }
+
+  for(size_t i(0); i<prestoe::num_act_joint; ++i)
   {
-    _mjData->ctrl[i] = (dynamic_cast<JTorqueCommand<double>*>(cmd))->_jtorque_cmd[i];
+    _mjData->ctrl[i] = jtorque_output[i];
   }
 }
 

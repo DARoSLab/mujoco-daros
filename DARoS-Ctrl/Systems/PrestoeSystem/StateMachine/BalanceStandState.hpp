@@ -2,8 +2,10 @@
 #define __BALANCED_STAND_H__
 
 #include "State.hpp"
+#include <FBModel/FloatingBaseModel.h>
 
 template<typename T> class WBC_Ctrl;
+
 template<typename T> class PrestoeStandCtrlData;
 template <typename T> class ObserverManager;
 template <typename T> class Command;
@@ -16,29 +18,33 @@ class BalanceStandState : public State<T> {
 
     virtual void OnEnter();
     virtual void RunNominal();
-    virtual Command<T>* GetCommand() { return _jtorque_cmd; }
+    virtual Command<T>* GetCommand() { return _jtorque_pos_cmd; }
 
   protected:
-    bool _b_standing_up = true;
+    ObserverManager<T>* _obs_manager;
 
+    void _ReadConfig(const std::string & file_name);
     void _KeepPostureStep();
     void _UpdateModel();
+    void _UpdateCommand();
 
     WBC_Ctrl<T> * _wbc_ctrl;
     PrestoeStandCtrlData<T> * _wbc_data;
 
+    T _targetHeight;
+
     Vec3<T> _des_com_pos; 
-    Vec3<T> _ini_com_pos;
     Vec3<T> _ini_body_ori_rpy;
     Vec3<T> _ini_body_pos;
     DVec<T> _ini_jpos;
     Vec3<T> _mid_pos_cps;
     T _body_weight;
     
-    Command<T>* _jtorque_cmd;
+    Command<T>* _jtorque_pos_cmd;
+    DVec<T> _Kp, _Kd;
 
     FBModelState<T> _fb_state;
-    FloatingBaseModel<T>* _fb_model;
+    FloatingBaseModel<T> _fb_model;
 };
 
 
