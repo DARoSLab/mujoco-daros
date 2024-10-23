@@ -9,12 +9,12 @@
 #include <stack>
 
 
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <Utilities/spatial.h>
 #include <Utilities/orientation_tools.h>
 #include <Utilities/SpatialInertia.h>
 
-#include <Dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 
 using namespace std;
 using namespace ori;

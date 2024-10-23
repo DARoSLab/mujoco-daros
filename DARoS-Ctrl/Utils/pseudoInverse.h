@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <eigen3/Eigen/LU>
 #include <eigen3/Eigen/SVD>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 using namespace std;
 

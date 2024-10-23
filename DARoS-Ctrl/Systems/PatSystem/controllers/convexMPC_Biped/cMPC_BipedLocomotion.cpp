@@ -1,7 +1,7 @@
 #include "cMPC_BipedLocomotion.h"
 #include <iostream>
 #include <Utilities/Timer.h>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <ParamHandler/ParamHandler.hpp>
 
 #define ORIGINAL_IMPLEMENTATION

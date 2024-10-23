@@ -10,7 +10,7 @@
 #include <pat_leg_control_data_lcmt.hpp>
 #include <state_estimator_lcmt.hpp>
 #include <thread>
-#include <dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <SimUtilities/VisualizationData.h>
 #include <Utilities/utilities.h>
 

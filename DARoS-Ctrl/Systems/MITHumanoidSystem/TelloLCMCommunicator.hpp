@@ -11,7 +11,7 @@
 #include <state_estimator_lcmt.hpp>
 
 #include <thread>
-#include <Dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <SimUtilities/VisualizationData.h>
 #include <Utilities/utilities.h>
 

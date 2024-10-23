@@ -4,7 +4,7 @@
 #include <FSM_State.h>
 #include <ctrl_utils/FootSwingTrajectory.h>
 #include <lcm-cpp.hpp>
-#include <dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include "pat_ik_tracking_lcmt.hpp"
 
 template<typename T> class WBC_Ctrl;

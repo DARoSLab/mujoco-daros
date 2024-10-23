@@ -3,10 +3,16 @@
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+if [ -z "$1" ]; then
+    echo "Usage: $0 <system name>"
+    exit 1
+fi
+Target_System=$1
+
 echo -e "${GREEN} Starting LCM type generation...${NC}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd ${DIR}/../../Systems/${system_name}/LCM-Types
+cd ${DIR}/../../Systems/${Target_System}/LCM-Types
 # Clean
 rm */*.jar
 rm */*.java

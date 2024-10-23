@@ -1,7 +1,7 @@
 #include "LegRightJPosTask.hpp"
 #include <Configuration.h>
-#include <Dynamics/FloatingBaseModel.h>
-#include <Utilities/pretty_print.h>
+#include <FBModel/FloatingBaseModel.h>
+#include <pretty_print.h>
 
 template <typename T>
 LegRightJPosTask<T>::LegRightJPosTask(const FloatingBaseModel<T>* robot)

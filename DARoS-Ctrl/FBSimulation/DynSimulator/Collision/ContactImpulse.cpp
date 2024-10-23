@@ -6,7 +6,7 @@
  */
 
 #include "ContactImpulse.h"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 #include <iostream>
 /*!

@@ -5,7 +5,7 @@
 #include <Utilities/spatial.h>
 #include <Utilities/orientation_tools.h>
 #include <Utilities/utilities.h>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 /*!
  * Compute acceleration that accelerometer will report
  * @param robotState : state of model

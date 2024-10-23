@@ -14,7 +14,7 @@
 #include <Configuration.h>
 
 #include "PatHardwareBridge.hpp"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 
 PatHardwareBridge::PatHardwareBridge(System<float>* system)

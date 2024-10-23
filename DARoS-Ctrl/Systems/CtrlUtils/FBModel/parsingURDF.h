@@ -10,10 +10,10 @@
 #include <map>
 #include <stack>
 
-#include <Utilities/pretty_print.h>
-#include <Utilities/spatial.h>
-#include <Utilities/orientation_tools.h>
-#include <Utilities/SpatialInertia.h>
+#include <pretty_print.h>
+#include <spatial.h>
+#include <orientation_tools.h>
+#include <SpatialInertia.h>
 
 #include "FloatingBaseModel.h"
 

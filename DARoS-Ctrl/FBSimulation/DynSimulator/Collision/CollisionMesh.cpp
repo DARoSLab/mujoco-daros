@@ -4,7 +4,7 @@
  */
 
 #include "Collision/CollisionMesh.h"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 /*!
  * check whether the contact happens or not

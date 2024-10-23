@@ -5,7 +5,7 @@
 #include <robots/Tello.h>
 #include <tello_joint_data_lcmt.hpp>
 #include <tello_joint_command_lcmt.hpp>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 template <typename T>
 class TelloJointController {

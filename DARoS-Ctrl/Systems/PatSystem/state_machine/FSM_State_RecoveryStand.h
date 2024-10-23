@@ -2,7 +2,7 @@
 #define GUIDE_DOG_RECOVERY_STANDUP_H
 
 #include <FSM_State.h>
-#include <dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <robots/PatBiped.h>
 /**
  *

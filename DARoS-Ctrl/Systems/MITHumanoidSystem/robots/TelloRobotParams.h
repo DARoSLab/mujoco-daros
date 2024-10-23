@@ -6,7 +6,7 @@
 #define Tello_H
 
 #include <Utilities/spatial.h>
-#include <Dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include "Tello.h"
 #include <cppTypes.h>
 

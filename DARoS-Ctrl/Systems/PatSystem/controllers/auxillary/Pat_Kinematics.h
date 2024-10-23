@@ -15,7 +15,7 @@
 #include <utils/Utilities/Mathutilities.h>
 #include <math.h>
 #include <utils/Utilities/pseudoInverse.h>
-#include <dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <robots/PatBiped.h>
 #include <can_data_lcmt.hpp>
 

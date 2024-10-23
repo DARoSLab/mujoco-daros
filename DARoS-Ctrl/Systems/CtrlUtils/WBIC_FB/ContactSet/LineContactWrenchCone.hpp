@@ -1,8 +1,8 @@
 #ifndef LINECWC_H
 #define LINECWC_H
 
-#include <Dynamics/FloatingBaseModel.h>
-#include <WBC/ContactSpec.hpp>
+#include <FBModel/FloatingBaseModel.h>
+#include <WBIC_FB/ContactSpec.hpp>
 
 template <typename T>
 class LineContactWrenchCone : public ContactSpec<T> {

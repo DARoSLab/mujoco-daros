@@ -1,5 +1,5 @@
 #include "PitchContact.hpp"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 // [ Local Ry, Fx, Fy, Fz ]
 template <typename T>

@@ -1,6 +1,6 @@
 #include "KinWBC.hpp"
-#include <Utilities/pretty_print.h>
-#include <Utilities/pseudoInverse.h>
+#include <pretty_print.h>
+#include <pseudoInverse.h>
 
 template <typename T>
 KinWBC<T>::KinWBC(size_t num_qdot)

@@ -10,7 +10,7 @@
 #include "MoCapEstimator.h"
 #include <unistd.h>
 #include <mutex>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 std::mutex mtx;
 template <typename T>
 void MoCapEstimator<T>::setup() {

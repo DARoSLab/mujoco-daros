@@ -1,5 +1,5 @@
 #include "WBIC.hpp"
-#include <Utilities/Timer.h>
+#include <Timer.h>
 #include <eigen3/Eigen/LU>
 #include <eigen3/Eigen/SVD>
 

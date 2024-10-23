@@ -2,9 +2,10 @@
 #define WHOLE_BODY_IMPULSE_CONTROL_H
 
 #include <pretty_print.h>
-#include <Goldfarb_Optimizer/QuadProg++.hh>
-#include <WBIC/ContactSpec.hpp>
-#include <WBIC/Task.hpp>
+#include <WBIC_FB/Goldfarb_Optimizer/QuadProg++.hpp>
+#include <WBIC_FB/ContactSpec.hpp>
+#include <WBIC_FB/Task.hpp>
+#include <pseudoInverse.h>
 
 template <typename T>
 class WBIC_ExtraData {

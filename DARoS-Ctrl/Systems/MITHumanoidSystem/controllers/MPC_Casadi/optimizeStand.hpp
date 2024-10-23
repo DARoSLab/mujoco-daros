@@ -5,7 +5,7 @@
 #include "cppTypes.h"
 #include "eigenHelper.hpp"
 #include "params.hpp"
-#include <Dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <TelloParameters.h>
 
 using namespace std;

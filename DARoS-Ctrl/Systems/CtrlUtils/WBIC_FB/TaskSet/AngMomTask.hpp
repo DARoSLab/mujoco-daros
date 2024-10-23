@@ -1,6 +1,6 @@
 #ifndef ANGMOM_TASK
 #define ANGMOM_TASK
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

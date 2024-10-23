@@ -1,8 +1,8 @@
 #include "MomentumTask.hpp"
 #include <Configuration.h>
-#include <Dynamics/FloatingBaseModel.h>
-#include <math/orientation_tools.h>
-#include <Utilities/pretty_print.h>
+#include <FBModel/FloatingBaseModel.h>
+#include <orientation_tools.h>
+#include <pretty_print.h>
 
 template <typename T>
 MomentumTask<T>::MomentumTask(const FloatingBaseModel<T>* robot) : Task<T>(6), _robot_sys(robot) {

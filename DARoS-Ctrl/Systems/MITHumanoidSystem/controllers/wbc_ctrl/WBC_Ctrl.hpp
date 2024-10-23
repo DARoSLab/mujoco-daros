@@ -2,7 +2,7 @@
 #define WBC_CONTROLLER_H
 
 #include <state_machine/ControlFSMData_Tello.h>
-#include <Dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <robots/Tello.h>
 #include <cppTypes.h>
 #include <WBC/WBIC/WBIC.hpp>

@@ -8,7 +8,7 @@
  */
 
 #include "PatKinematicMocapEstimator.h"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <robots/Patroclus.h>
 template <typename T>
 PatKinematicMocapEstimator<T>::PatKinematicMocapEstimator():_lcm(getLcmUrl(255)) {

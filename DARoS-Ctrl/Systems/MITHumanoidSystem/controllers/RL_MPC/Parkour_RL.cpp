@@ -1,7 +1,7 @@
 #include "Parkour_RL.h"
 #include <iostream>
 #include <Utilities/Timer.h>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include "MPC_Casadi/eigenHelper.hpp"
 #include <cppTypes.h>
 #include <loco-jump/utils/State2d.hpp>

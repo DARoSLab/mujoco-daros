@@ -1,7 +1,7 @@
 #ifndef BODY_ORIENTATION_PITCH_YAW_TASK
 #define BODY_ORIENTATION_PITCH_YAW_TASK
 // (Rx, Ry, Rz)
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

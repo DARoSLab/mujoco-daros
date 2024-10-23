@@ -15,7 +15,7 @@
 #include "pat_leg_control_command_lcmt.hpp"
 #include "pat_leg_control_data_lcmt.hpp"
 #include <robots/PatBiped.h>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <can_data_lcmt.hpp>
 #include <can_command_lcmt.hpp>
 #include <ctrl_utils/LimbData.hpp>

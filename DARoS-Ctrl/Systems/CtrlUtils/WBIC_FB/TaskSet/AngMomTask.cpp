@@ -1,7 +1,7 @@
 #include "AngMomTask.hpp"
 #include <Configuration.h>
-#include <Dynamics/FloatingBaseModel.h>
-#include <Utilities/pretty_print.h>
+#include <FBModel/FloatingBaseModel.h>
+#include <pretty_print.h>
 
 template <typename T>
 AngMomTask<T>::AngMomTask(const FloatingBaseModel<T>* robot) : Task<T>(3), _robot_sys(robot) {

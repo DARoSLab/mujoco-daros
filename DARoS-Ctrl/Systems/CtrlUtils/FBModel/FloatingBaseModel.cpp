@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "FloatingBaseModel.h"
-#include <orientation_tools.h>
 #include <pretty_print.h>
 
 using namespace ori;

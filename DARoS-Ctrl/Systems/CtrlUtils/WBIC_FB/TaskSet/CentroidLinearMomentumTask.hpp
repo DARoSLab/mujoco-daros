@@ -1,6 +1,6 @@
 #ifndef CENTROID_LINEAR_MOMENTUM_TASK
 #define CENTROID_LINEAR_MOMENTUM_TASK
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

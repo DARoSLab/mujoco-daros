@@ -11,7 +11,7 @@
  */
 
 #include "OrientationEstimator.h"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 /*!
  * Get quaternion, rotation matrix, angular velocity (body and world),
  * rpy, acceleration (world, body) by copying from cheater state data

@@ -11,7 +11,7 @@
 #define JOINT_CONTROLLER_H
 
 #include "cppTypes.h"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 /*!
  * Data sent from the control algorithm to the robot
  */

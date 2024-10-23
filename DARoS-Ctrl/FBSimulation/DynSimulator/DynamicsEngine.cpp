@@ -8,7 +8,7 @@
 #include "DynamicsEngine.h"
 #include "Collision/ContactImpulse.h"
 #include "Collision/ContactSpringDamper.h"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 /*!
  * Initialize the dynamics simulator by allocating memory for ABA matrices

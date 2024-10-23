@@ -2,7 +2,7 @@
 #define PAT_WBC_CONTROLLER_H
 
 #include <state_machine/ControlFSMData.h>
-#include <dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <robots/PatBiped.h>
 #include <cppTypes.h>
 #include <WBC/WBIC/WBIC.hpp>

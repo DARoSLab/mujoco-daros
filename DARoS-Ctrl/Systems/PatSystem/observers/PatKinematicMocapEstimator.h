@@ -12,7 +12,7 @@
 
 #include "StateEstimatorContainer.h"
 #include <robots/PatBiped.h>
-#include <dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <lcm-cpp.hpp>
 #include "pat_mocap_kin_lcmt.hpp"
 

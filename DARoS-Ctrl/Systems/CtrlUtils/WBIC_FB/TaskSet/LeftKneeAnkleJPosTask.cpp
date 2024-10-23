@@ -1,7 +1,7 @@
 #include "LeftKneeAnkleJPosTask.hpp"
 #include <Configuration.h>
-#include <Dynamics/FloatingBaseModel.h>
-#include <Utilities/pretty_print.h>
+#include <FBModel/FloatingBaseModel.h>
+#include <pretty_print.h>
 
 template <typename T>
 LeftKneeAnkleJPosTask<T>::LeftKneeAnkleJPosTask(const FloatingBaseModel<T>* robot)

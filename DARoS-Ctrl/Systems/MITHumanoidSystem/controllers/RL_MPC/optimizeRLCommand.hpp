@@ -4,7 +4,7 @@
 #include <casadi/casadi.hpp>
 #include "cppTypes.h"
 #include "MPC_Casadi/eigenHelper.hpp"
-#include <Dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <TelloParameters.h>
 
 using namespace std;

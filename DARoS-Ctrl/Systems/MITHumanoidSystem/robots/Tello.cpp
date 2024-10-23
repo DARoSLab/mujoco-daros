@@ -12,7 +12,7 @@
 
 #include <Utilities/spatial.h>
 #include <Utilities/orientation_tools.h>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <Utilities/SpatialInertia.h>
 #include <Configuration.h>
 

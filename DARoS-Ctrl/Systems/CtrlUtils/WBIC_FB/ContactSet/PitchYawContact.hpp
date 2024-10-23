@@ -1,8 +1,8 @@
 #ifndef PITCH_YAW_CONTACT_H
 #define PITCH_YAW_CONTACT_H
 
-#include <Dynamics/FloatingBaseModel.h>
-#include <WBC/ContactSpec.hpp>
+#include <FBModel/FloatingBaseModel.h>
+#include <WBIC_FB/ContactSpec.hpp>
 
 template <typename T>
 class PitchYawContact : public ContactSpec<T> {

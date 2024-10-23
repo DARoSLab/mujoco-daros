@@ -1,6 +1,6 @@
 #ifndef LINK_AVRG_POS_TASK
 #define LINK_AVRG_POS_TASK
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

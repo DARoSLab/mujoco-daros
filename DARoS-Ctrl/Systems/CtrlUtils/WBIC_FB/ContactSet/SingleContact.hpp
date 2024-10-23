@@ -1,8 +1,8 @@
 #ifndef SINGLE_CONTACT_H
 #define SINGLE_CONTACT_H
 
-#include <Dynamics/FloatingBaseModel.h>
-#include <WBC/ContactSpec.hpp>
+#include <FBModel/FloatingBaseModel.h>
+#include <WBIC_FB/ContactSpec.hpp>
 
 template <typename T>
 class SingleContact : public ContactSpec<T> {

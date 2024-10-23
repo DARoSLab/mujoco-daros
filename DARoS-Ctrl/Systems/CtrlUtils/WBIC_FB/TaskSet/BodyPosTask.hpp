@@ -2,7 +2,7 @@
 #define BODY_POS_TASK
 
 // (X, Y, Z)
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T> class FloatingBaseModel;
 

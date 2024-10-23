@@ -1,7 +1,7 @@
 #include "PatSystem.hpp"
 #include <PatLCMCommunicator.hpp>
 #include <PatMocapManager.hpp>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <observers/PositionVelocityEstimator.h>
 #include <observers/PatKinematicMocapEstimator.h>
 #include <observers/PatEstimators.h>

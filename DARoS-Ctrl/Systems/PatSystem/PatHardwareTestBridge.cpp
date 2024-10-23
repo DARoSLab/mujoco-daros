@@ -14,7 +14,7 @@
 #include <Configuration.h>
 
 #include "PatHardwareTestBridge.hpp"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 // #define USE_MICROSTRAIN
 // #define PRINT_CAN_DATA

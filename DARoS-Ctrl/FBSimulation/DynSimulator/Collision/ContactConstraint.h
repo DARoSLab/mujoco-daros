@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include <Collision/Collision.h>
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <FloatingBaseModel.h>
 #include <cppTypes.h>
 

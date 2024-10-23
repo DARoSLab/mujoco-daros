@@ -8,7 +8,7 @@
 #include <vector>
 #include <Dynamics/Robot.h>
 #include <Dynamics/ActuatorModel.h>
-#include <Dynamics/FloatingBaseModel.h>
+#include <FBModel/FloatingBaseModel.h>
 #include <Utilities/SpatialInertia.h>
 #include "TelloActuatorModel.h"
 

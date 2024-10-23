@@ -1,7 +1,7 @@
 #include "LinkAvrgPosTask.hpp"
 #include <Configuration.h>
-#include <Dynamics/FloatingBaseModel.h>
-#include <Utilities/pretty_print.h>
+#include <FBModel/FloatingBaseModel.h>
+#include <pretty_print.h>
 
 template <typename T>
 LinkAvrgPosTask<T>::LinkAvrgPosTask(const FloatingBaseModel<T>* robot, int link_idx1, int link_idx2, bool virtual_depend)

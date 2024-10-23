@@ -1,7 +1,11 @@
+find_package(lcm REQUIRED)
+include_directories("/usr/local/include/lcm/")   # lcm includes
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/StateMachine)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Robot)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Observer)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/LCM-Types/cpp)
 
 # add_library(ctrl_test SHARED 
 #             PrestoeMJSimulationBridge.cpp
@@ -11,7 +15,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Observer)
 add_library(prestoe_ctrl_lib STATIC 
                       PrestoeSystem.cpp
                       StateMachine/StateMachineCtrl.cpp
-                      StateMachine/JPosCtrlState.cpp)
+                      StateMachine/JPosCtrlState.cpp
+                      # Controller/WBC_Prestoe/*.cpp
+                      # Controller/WBC_Prestoe/PrestoeStandCtrl*.cpp
+                      )
 
 target_link_libraries(prestoe_ctrl_lib daros-utils daros-common)
 

@@ -1,8 +1,8 @@
 #include "LinkPosTask.hpp"
 // (X, Y, Z)
 #include <Configuration.h>
-#include <Dynamics/FloatingBaseModel.h>
-#include <Utilities/pretty_print.h>
+#include <FBModel/FloatingBaseModel.h>
+#include <pretty_print.h>
 #include <iostream>
 template <typename T>
 LinkPosTask<T>::LinkPosTask(const FloatingBaseModel<T>* robot, int link_idx,

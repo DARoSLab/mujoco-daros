@@ -1,8 +1,8 @@
 #ifndef KINEMATICS_WHOLE_BODY_CONTROL
 #define KINEMATICS_WHOLE_BODY_CONTROL
 
-#include <WBC/ContactSpec.hpp>
-#include <WBC/Task.hpp>
+#include <WBIC_FB/ContactSpec.hpp>
+#include <WBIC_FB/Task.hpp>
 #include <vector>
 
 template <typename T>

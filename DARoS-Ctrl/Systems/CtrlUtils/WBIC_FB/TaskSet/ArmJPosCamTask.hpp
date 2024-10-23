@@ -1,6 +1,6 @@
 #ifndef ARM_JPOS_CAM_TASK
 #define ARM_JPOS_CAM_TASK
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

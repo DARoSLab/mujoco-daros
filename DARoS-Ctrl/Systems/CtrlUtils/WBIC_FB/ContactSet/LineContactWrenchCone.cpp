@@ -1,5 +1,5 @@
 #include "LineContactWrenchCone.hpp"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 template <typename T>
 LineContactWrenchCone<T>::LineContactWrenchCone(const FloatingBaseModel<T>* robot, int pt1, int pt2) : ContactSpec<T>(5), _max_Fz(3000.), _contact_pt1(pt1), _contact_pt2(pt2), _dim_U(7) {

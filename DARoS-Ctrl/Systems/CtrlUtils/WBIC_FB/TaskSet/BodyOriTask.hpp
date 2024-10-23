@@ -1,7 +1,7 @@
 #ifndef BODY_ORIENTATION_TASK
 #define BODY_ORIENTATION_TASK
 // (Rx, Ry, Rz)
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

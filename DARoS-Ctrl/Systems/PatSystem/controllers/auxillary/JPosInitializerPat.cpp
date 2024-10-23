@@ -4,7 +4,7 @@
  */
 
 #include "JPosInitializerPat.h"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 #include <ParamHandler/ParamHandler.hpp>
 #include <Configuration.h>
 

@@ -1,7 +1,7 @@
 #ifndef JPOS_BODY_ORIENTATION_TASK
 #define JPOS_BODY_ORIENTATION_TASK
 // (Rx, Ry, Rz, jpos)
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

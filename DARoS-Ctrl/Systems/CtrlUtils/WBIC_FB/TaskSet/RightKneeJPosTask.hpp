@@ -1,7 +1,7 @@
 #ifndef RIGHT_KNEE_JPOS_TASK_Cheetah
 #define RIGHT_KNEE_JPOS_TASK_Cheetah
 
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

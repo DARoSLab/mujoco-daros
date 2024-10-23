@@ -1,6 +1,6 @@
 #ifndef CENTROID_ANGULAR_MOMENTUM_TASK2
 #define CENTROID_ANGULAR_MOMENTUM_TASK2
-#include <WBC/Task.hpp>
+#include <WBIC_FB/Task.hpp>
 
 template <typename T>
 class FloatingBaseModel;

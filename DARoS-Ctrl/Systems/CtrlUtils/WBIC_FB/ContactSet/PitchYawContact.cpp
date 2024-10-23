@@ -1,5 +1,5 @@
 #include "PitchYawContact.hpp"
-#include <Utilities/pretty_print.h>
+#include <pretty_print.h>
 
 // [ Local Ry, Local Rz, Fx, Fy, Fz ]
 template <typename T>
