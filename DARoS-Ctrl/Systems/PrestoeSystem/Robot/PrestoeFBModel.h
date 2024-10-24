@@ -45,11 +45,12 @@ namespace prestoe_contact{
  *
  */
 template <typename T>
-class Prestoe {
+class PrestoeFBModel {
   public:
     static void buildFBModel(FloatingBaseModel<T> & model, bool verbose = false, T gravity = -9.81)
     {
-      buildFloatingBaseModelFromURDF(model, THIS_COM"/Systems/PrestoeSystem/Robot/prestoe_urdf.urdf", verbose);
+      buildFloatingBaseModelFromURDF(model, 
+      THIS_COM"/Systems/PrestoeSystem/Robot/prestoe_urdf.urdf", verbose);
 
       // Contact setup
       Vec3<T> offset;

@@ -34,7 +34,8 @@ typedef map<string, JointPtr > URDFJointMap;
 
 
 template <typename T>
-bool buildFloatingBaseModelFromURDF(FloatingBaseModel<T> & model, const std::string & urdf_file, bool verbose = false){
+bool buildFloatingBaseModelFromURDF(FloatingBaseModel<T> & model, 
+const std::string & urdf_file, bool verbose = false){
   printf("[URDF] Parsing %s\n", urdf_file.c_str());
   std::shared_ptr<dynacore::urdf::ModelInterface> urdf_model;
   urdf_model = dynacore::urdf::parseURDFFile(urdf_file, verbose);

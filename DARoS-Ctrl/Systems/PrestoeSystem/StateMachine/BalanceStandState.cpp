@@ -13,8 +13,8 @@ BalanceStandState<T>::BalanceStandState(ObserverManager<T>* obs_manager, Prestoe
   _obs_manager(obs_manager),
   State<T>(prestoe_system){
 
-  Prestoe<T> dummy;
-  dummy.buildFBModel(_fb_model, true);
+  // PrestoeFBModel<T>::buildFBModel(_fb_model, false);
+  PrestoeFBModel<T>::buildFBModel(_fb_model, true);
   _fb_state = _fb_model._state;
 
   _ReadConfig(THIS_COM"/PrestoeSystem/Configs/standing_state.yaml");
@@ -31,7 +31,6 @@ BalanceStandState<T>::BalanceStandState(ObserverManager<T>* obs_manager, Prestoe
 
 template <typename T>
 void BalanceStandState<T>::OnEnter() {
-  printf("[Balance Stand] On Enter begin\n");
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
@@ -46,13 +45,10 @@ void BalanceStandState<T>::OnEnter() {
 
   _mid_pos_cps.setZero();
 
-  std::cout<<_fb_model._pGC.size()<<std::endl;
   for(size_t i(0); i<prestoe_contact::num_foot_contact; ++i){
-    printf("in\n");
     pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
     _mid_pos_cps += _fb_model._pGC[prestoe_contact::rheel + i]/prestoe_contact::num_foot_contact;
   }
-printf("1\n");
 
   this->_state_time = 0.0;
 
@@ -92,9 +88,7 @@ void BalanceStandState<T>::_KeepPostureStep() {
     _wbc_data->jpos_des = _ini_jpos;
     //setting orientation targets
     // _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1];
-    T ini_pitch = _ini_body_ori_rpy[1];
-    T target_pitch = 0.;
-    _wbc_data->pBody_RPY_des[1] = smooth_change(ini_pitch, target_pitch, standingDuration, curr_time);
+    _wbc_data->pBody_RPY_des[1] = smooth_change<T>(_ini_body_ori_rpy[1], 0., standingDuration, curr_time);
 
     //setting COM targets
     _wbc_data->pBody_des = _mid_pos_cps;
@@ -120,7 +114,6 @@ void BalanceStandState<T>::_UpdateModel(){
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
 
-  pretty_print(cheater_mode_obs->_q, std::cout, "q");
   _fb_state.bodyPosition = cheater_mode_obs->_q.head(3); 
   _fb_state.bodyOrientation = cheater_mode_obs->_q.segment(3,4); 
 
@@ -134,11 +127,11 @@ void BalanceStandState<T>::_UpdateModel(){
     _fb_state.qd[jidx] = cheater_mode_obs->_dq[jidx+6]; 
   }
 
-  pretty_print(_fb_state.bodyPosition, std::cout, "body position");
-  pretty_print(_fb_state.bodyOrientation, std::cout, "body orientation");
-  pretty_print(_fb_state.bodyVelocity, std::cout, "body velocity");
-  pretty_print(_fb_state.q, std::cout, "joint positions");
-  pretty_print(_fb_state.qd, std::cout, "joint velocities");
+  // pretty_print(_fb_state.bodyPosition, std::cout, "body position");
+  // pretty_print(_fb_state.bodyOrientation, std::cout, "body orientation");
+  // pretty_print(_fb_state.bodyVelocity, std::cout, "body velocity");
+  // pretty_print(_fb_state.q, std::cout, "joint positions");
+  // pretty_print(_fb_state.qd, std::cout, "joint velocities");
 
   _fb_model.setState(_fb_state);
   _fb_model.contactJacobians();
@@ -149,8 +142,9 @@ void BalanceStandState<T>::_UpdateModel(){
   _fb_model.centroidMomentumMatrix();
   _fb_model.massandCoriolisMatrix();//Comment if not needed
 
-  DMat<T> A = _fb_model.getMassMatrix();
-  std::cout<<A.block(0,0, 6,6)<<std::endl;
+  // DMat<T> A = _fb_model.getMassMatrix();
+  // std::cout<<A<<std::endl;
+  // std::cout<<A.block(0,0, 6,6)<<std::endl;
 }
 
 template<typename T>

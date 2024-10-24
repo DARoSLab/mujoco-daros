@@ -19,7 +19,7 @@
         </collision>
     </link>
 
- <joint name="torsoyaw" type="revolute">
+ <joint name="a_torsoyaw" type="revolute">
       <parent link="torso_link"/>
       <child link="pelvis"/>
       <axis xyz="0 0 1"/>
@@ -47,7 +47,7 @@
         </collision>
     </link>
 
-    <joint name="R_hipyaw" type="revolute">
+    <joint name="bR_hipyaw" type="revolute">
         <parent link="pelvis"/>
         <child link="R_hipyaw_link"/>
         <axis xyz="0 0 1"/>
@@ -249,7 +249,7 @@
         </collision>
     </link>
     <!--!!!!!!!!!!!! Left Leg !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
-    <joint name="L_hipyaw" type="revolute">
+    <joint name="cL_hipyaw" type="revolute">
         <parent link="pelvis"/>
         <child link="L_hipyaw_link"/>
         <axis xyz="0 0 1"/>
@@ -460,7 +460,7 @@
 
     <!--!!!!!!!!!!!! Right Arm !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
 
-    <joint name="R_shoulderpitch" type="revolute">
+    <joint name="yR_shoulderpitch" type="revolute">
         <parent link="torso_link"/>
         <child link="R_shoulderpitch_link"/>
         <axis xyz="0 0 1"/>
@@ -576,7 +576,7 @@
 
     <!--!!!!!!!!!!!! Left Arm !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
 
-    <joint name="L_shoulderpitch" type="revolute">
+    <joint name="zL_shoulderpitch" type="revolute">
         <parent link="torso_link"/>
         <child link="L_shoulderpitch_link"/>
         <axis xyz="0 1 0"/>

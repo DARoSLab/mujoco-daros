@@ -17,7 +17,7 @@ const std::string & config_file):
 
   this->_wbic_data->_W_rf = DVec<T>::Constant(3*_num_contact, 100.);
   for(size_t i(0); i<_num_contact; ++i){
-    _foot_contact[i] = new SingleContact<T>(this->_model, prestoe_contact::rheel + i);
+    _foot_contact[i] = new SingleContact<T>(this->_model, prestoe_contact::lheel + i);
     // this->_wbic_data->_W_rf[3*i+2] = 1;
   }
   _ReadConfig(config_file);
