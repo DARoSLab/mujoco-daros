@@ -18,6 +18,9 @@ namespace prestoe_fb_link { // numbering depends on order of how contact points 
   constexpr size_t rtoe = 13; 
   constexpr size_t lfoot = 19; 
   constexpr size_t ltoe = 20; 
+
+  constexpr size_t rlowarm = 24;
+  constexpr size_t llowarm = 28;
 }
 
 namespace prestoe_contact{
@@ -34,6 +37,9 @@ namespace prestoe_contact{
   constexpr size_t ltoe_4 = 17;
 
   constexpr size_t num_foot_contact = 10;
+
+  constexpr size_t rhand = 18;
+  constexpr size_t lhand = 19;
 }
 
 /*!
@@ -72,6 +78,11 @@ class PrestoeFBModel {
       model.addGroundContactPoint(prestoe_fb_link::ltoe, Vec3<T>(-0.02, 0.03, -0.031));
       model.addGroundContactPoint(prestoe_fb_link::ltoe, Vec3<T>(0.075, -0.03, -0.031));
       model.addGroundContactPoint(prestoe_fb_link::ltoe, Vec3<T>(-0.02, -0.03, -0.031));
+
+      // right hand contact
+      model.addGroundContactPoint(prestoe_fb_link::rlowarm, Vec3<T>(0.0, 0.0, -0.12));
+      // left hand contact
+      model.addGroundContactPoint(prestoe_fb_link::llowarm, Vec3<T>(0.0, 0.0, -0.12));
 
       Vec3<T> g(0, 0, gravity);
       model.setGravity(g);

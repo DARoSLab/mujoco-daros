@@ -23,20 +23,33 @@ class BoxPickupState : public State<T> {
     ObserverManager<T>* _obs_manager;
 
     void _ReadConfig(const std::string & file_name);
-    void _KeepPostureStep();
     void _UpdateModel();
     void _UpdateCommand();
+
+    bool _RunSequence(size_t idx, T seq_time, const Vec3<T> & com_ini, const Vec3<T> & rpy_ini, 
+                      const Vec3<T> & rhand_ini, const Vec3<T> & lhand_ini);
 
     WBC_Ctrl<T> * _wbc_ctrl;
     PrestoeBoxPickupCtrlData<T> * _wbc_data;
 
-    Vec3<T> _des_com_pos; 
     Vec3<T> _ini_body_ori_rpy;
-    Vec3<T> _ini_com;
+    Vec3<T> _ini_com_pos;
     Vec3<T> _ini_body_pos;
     DVec<T> _ini_jpos;
     Vec3<T> _mid_pos_cps;
 
+    Vec3<T> _ini_rhand_pos;
+    Vec3<T> _ini_lhand_pos;
+
+    DVec<T> _seq_duration;
+    std::vector<Vec3<T>> _seq_com_delta;
+    std::vector<Vec3<T>> _seq_rpy_delta;
+    std::vector<Vec3<T>> _seq_rhand_delta;
+    std::vector<Vec3<T>> _seq_lhand_delta;
+
+    size_t _seq_idx = 0;
+    T _accumulated_seq_time = 0.;
+    Vec3<T> _pre_CoM_target, _pre_RPY_target, _pre_RHand_target, _pre_LHand_target;
 
     Command<T>* _jtorque_pos_cmd;
     DVec<T> _Kp, _Kd;

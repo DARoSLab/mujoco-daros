@@ -579,7 +579,7 @@
     <joint name="zL_shoulderpitch" type="revolute">
         <parent link="torso_link"/>
         <child link="L_shoulderpitch_link"/>
-        <axis xyz="0 1 0"/>
+        <axis xyz="0 0 1"/>
         <origin rpy="-1.1345 0 0" xyz="0 106.840e-3 300.24519e-3"/>
         <!-- -65 degree tilt for first shoulder joint-->
         <limit effort="100" lower="-2.61799387799" upper="0.9" velocity="20"/>

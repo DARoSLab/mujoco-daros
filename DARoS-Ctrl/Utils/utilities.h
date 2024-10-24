@@ -201,6 +201,14 @@ void EulerZYX_2_SO3(const Vec3<T>& euler_zyx, Mat3<T>& SO3) {
  * Interpolate with cosine (sometimes called coserp)
  */
 template <typename T>
+Vec3<T> smooth_change(const Vec3<T> & ini, const Vec3<T> & end, T moving_duration, T curr_time) {
+  if (curr_time > moving_duration) {
+    return end;
+  }
+  return (ini + (end - ini) * 0.5 * (1 - cos(curr_time / moving_duration * M_PI)));
+}
+
+template <typename T>
 T smooth_change(T ini, T end, T moving_duration, T curr_time) {
   if (curr_time > moving_duration) {
     return end;

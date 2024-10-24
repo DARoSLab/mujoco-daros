@@ -10,6 +10,9 @@ class PrestoeBoxPickupCtrlData{
     Vec3<T> pCoM_des;
     Vec3<T> pBody_RPY_des;
 
+    Vec3<T> rHand_pos_des;
+    Vec3<T> lHand_pos_des;
+
     Vec3<T> Fr_des[prestoe_contact::num_foot_contact];
     DVec<T> jpos_des = DVec<T>::Zero(prestoe::num_act_joint);
 };
@@ -34,6 +37,9 @@ class PrestoeBoxPickupCtrl: public WBC_Ctrl<T>{
     Task<T>* _body_ori_task;
     Task<T>* _jpos_task;
     Task<T>* _com_task;
+    Task<T>* _rhand_task;
+    Task<T>* _lhand_task;
+
     constexpr static size_t _num_contact = prestoe_contact::num_foot_contact;
     ContactSpec<T>* _foot_contact[_num_contact];
 

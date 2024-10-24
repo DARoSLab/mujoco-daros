@@ -44,58 +44,72 @@ void BoxPickupState<T>::OnEnter() {
   Quat<T> quat = cheater_mode_obs->_q.segment(3,4);
   _ini_body_ori_rpy = quatToRPY(quat);
 
-  _ini_com = _ini_body_pos + _fb_model.getComPosWorld();
+  _ini_com_pos = _ini_body_pos + _fb_model.getComPosWorld();
+
+  // Hand
+  _ini_rhand_pos = _fb_model._pGC[prestoe_contact::rhand];
+  _ini_lhand_pos = _fb_model._pGC[prestoe_contact::lhand];
 
   _mid_pos_cps.setZero();
   for(size_t i(0); i<prestoe_contact::num_foot_contact; ++i){
-    pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
+    // pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
     _mid_pos_cps += _fb_model._pGC[prestoe_contact::rheel + i]/prestoe_contact::num_foot_contact;
   }
 
   this->_state_time = 0.0;
+  _seq_idx = 0;
+  _accumulated_seq_time = 0.0;
+
+  _pre_CoM_target = _ini_com_pos;
+  _pre_RPY_target = _ini_body_ori_rpy;
+  _pre_RHand_target = _ini_rhand_pos;
+  _pre_LHand_target = _ini_lhand_pos;
 
   // pretty_print(_ini_body_ori_rpy, std::cout, "body rpy");
-  pretty_print(_mid_pos_cps, std::cout, "[Box Pick Up] middle of cps");
+  // pretty_print(_mid_pos_cps, std::cout, "[Box Pick Up] middle of cps");
   printf("[Box Pick Up] On Enter\n");
 }
 
 template <typename T>
 void BoxPickupState<T>::RunNominal() {
   _UpdateModel();
-  _KeepPostureStep();
+
+  if(_RunSequence(_seq_idx, this->_state_time - _accumulated_seq_time, _pre_CoM_target, _pre_RPY_target, _pre_RHand_target, _pre_LHand_target)){
+    // If the sequence is done, move to the next sequence
+    _accumulated_seq_time += _seq_duration[_seq_idx];
+
+    _pre_RPY_target += _seq_rpy_delta[_seq_idx];
+    _pre_CoM_target += _seq_com_delta[_seq_idx];
+    _pre_RHand_target += _seq_rhand_delta[_seq_idx];
+    _pre_LHand_target += _seq_lhand_delta[_seq_idx];
+    ++_seq_idx;
+  }
+
   _UpdateCommand();
-}
 
-template<typename T>
-void BoxPickupState<T>::_UpdateCommand(){
-  CheaterModeObserver<T>* cheater_mode_obs = 
-    dynamic_cast<CheaterModeObserver<T>*>(
-      _obs_manager->_observers[PrestoeObsList::CheaterMode]);
-
-  JTorquePosCommand<T>* cmd = dynamic_cast<JTorquePosCommand<T>*>(_jtorque_pos_cmd);
-
-  cmd->SetJointCommand(_wbc_ctrl->_tau_ff, 
-      _wbc_ctrl->_des_jpos, _wbc_ctrl->_des_jvel, _Kp, _Kd);
+  this->_state_time += this->_sys_info._ctrl_dt;
 }
 
 template <typename T>
-void BoxPickupState<T>::_KeepPostureStep() {
-    this->_state_time += this->_sys_info._ctrl_dt;
-    T curr_time = this->_state_time;
+bool BoxPickupState<T>::_RunSequence(size_t idx, T seq_time, const Vec3<T> & com_ini, 
+  const Vec3<T> & rpy_ini, const Vec3<T> & rhand_ini, const Vec3<T> & lhand_ini){
 
-    _wbc_data->jpos_des = _ini_jpos;
-    //setting orientation targets
-    _wbc_data->pBody_RPY_des.setZero();
-    _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1];
+  _wbc_data->pBody_RPY_des = smooth_change<T>(rpy_ini, rpy_ini + _seq_rpy_delta[idx], _seq_duration[idx], seq_time);
+  _wbc_data->pCoM_des = smooth_change<T>(com_ini, com_ini + _seq_com_delta[idx], _seq_duration[idx], seq_time);
+  _wbc_data->rHand_pos_des = smooth_change<T>(rhand_ini, rhand_ini + _seq_rhand_delta[idx], _seq_duration[idx], seq_time);
+  _wbc_data->lHand_pos_des = smooth_change<T>(lhand_ini, lhand_ini + _seq_lhand_delta[idx], _seq_duration[idx], seq_time);
 
-    //setting COM target
-    _wbc_data->pCoM_des = _mid_pos_cps;
-    _wbc_data->pCoM_des[2] = _ini_com[2];
+  _wbc_data->jpos_des = _ini_jpos;
+  for (size_t i(0); i<prestoe_contact::num_foot_contact; ++i) _wbc_data->Fr_des[i].setZero();
 
-    for (size_t i(0); i<prestoe_contact::num_foot_contact; ++i) _wbc_data->Fr_des[i].setZero();
+  // Run WBC controller
+  _wbc_ctrl->run(_wbc_data);
 
-    _wbc_ctrl->run(_wbc_data);
+  // If the sequence is not done yet or the sequence index is out of bound, then keep the current sequence 
+  if(seq_time <= _seq_duration[idx] || idx >= _seq_duration.size()){ return false; }
+  else{ return true; } // If the sequence is done, move to the next sequence
 }
+
 
 template<typename T>
 void BoxPickupState<T>::_UpdateModel(){
@@ -143,8 +157,33 @@ void BoxPickupState<T>::_ReadConfig(const std::string & file_name) {
 
   param_handler.getEigenVec("Kp", _Kp);
   param_handler.getEigenVec("Kd", _Kd);
+
+  param_handler.getEigenVec("seq_duration", _seq_duration);
+  param_handler.getVec3Sequence("seq_CoM_delta", _seq_com_delta);
+  param_handler.getVec3Sequence("seq_RPY_delta", _seq_rpy_delta);
+  param_handler.getVec3Sequence("seq_RHand_delta", _seq_rhand_delta);
+  param_handler.getVec3Sequence("seq_LHand_delta", _seq_lhand_delta);
+
+  // print sequence
+  // for(size_t i(0); i<_seq_duration.size(); ++i){
+  //   printf("seq duration: %f\n", _seq_duration[i]);
+  //   pretty_print(_seq_com_delta[i], std::cout, "seq CoM delta");
+  //   pretty_print(_seq_rpy_delta[i], std::cout, "seq RPY delta");
+  //   pretty_print(_seq_rhand_delta[i], std::cout, "seq RHand delta");
+  //   pretty_print(_seq_lhand_delta[i], std::cout, "seq LHand delta");
+  // }
 }
 
+template<typename T>
+void BoxPickupState<T>::_UpdateCommand(){
+  CheaterModeObserver<T>* cheater_mode_obs = 
+    dynamic_cast<CheaterModeObserver<T>*>(
+      _obs_manager->_observers[PrestoeObsList::CheaterMode]);
 
+  JTorquePosCommand<T>* cmd = dynamic_cast<JTorquePosCommand<T>*>(_jtorque_pos_cmd);
+
+  cmd->SetJointCommand(_wbc_ctrl->_tau_ff, 
+      _wbc_ctrl->_des_jpos, _wbc_ctrl->_des_jvel, _Kp, _Kd);
+}
 template class BoxPickupState<float>;
 template class BoxPickupState<double>;

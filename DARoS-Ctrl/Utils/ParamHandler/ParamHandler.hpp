@@ -37,6 +37,22 @@ public:
   }
 
   template<typename T>
+  bool getVec3Sequence(const std::string & key, std::vector<Vec3<T>> & vec3_seq) {
+    try {
+      std::vector< std::vector<T> > vec3_seq_value = config_[key].as< std::vector< std::vector<T> > >();
+      vec3_seq.resize(vec3_seq_value.size());
+      for (size_t i = 0; i < vec3_seq_value.size(); i++) {
+        // vec3_seq[i] = Eigen::Map<Vec3<T> >(vec3_seq_value[i].data(), vec3_seq_value[i].size());
+        vec3_seq[i] = Eigen::Map<Vec3<T> >(vec3_seq_value[i].data(), 3);
+      }
+    } catch (std::exception &e) {
+      return false;
+    }
+    return true;
+  }
+
+
+  template<typename T>
   bool getVector(const std::string &category, const std::string &key, 
   std::vector<T> &vec_value) {
     try {

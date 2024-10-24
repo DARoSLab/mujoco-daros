@@ -14,6 +14,8 @@ const std::string & config_file):
   _body_ori_task = new BodyOriTask<T>(this->_model);
   _jpos_task = new JPosTask<T>(this->_model);
   _com_task = new CentroidLinearMomentumTask<T>(this->_model);
+  _rhand_task = new LinkPosTask<T>(this->_model, prestoe_contact::rhand);
+  _lhand_task = new LinkPosTask<T>(this->_model, prestoe_contact::lhand);
 
   this->_wbic_data->_W_rf = DVec<T>::Constant(3*_num_contact, 10.);
   for(size_t i(0); i<_num_contact; ++i){
@@ -38,6 +40,14 @@ void PrestoeBoxPickupCtrl<T>::_ContactTaskUpdate(void* input){
   // com task
   _com_task->UpdateTask(&(_input_data->pCoM_des), zero_vec3, zero_vec3); 
   this->_task_list.push_back(_com_task);
+
+  // right hand task
+  _rhand_task->UpdateTask(&(_input_data->rHand_pos_des), zero_vec3, zero_vec3);
+  this->_task_list.push_back(_rhand_task);
+
+  // left hand task
+  _lhand_task->UpdateTask(&(_input_data->lHand_pos_des), zero_vec3, zero_vec3);
+  this->_task_list.push_back(_lhand_task);
 
    // Contact     
   for(size_t i(0); i<_num_contact; ++i){
