@@ -17,9 +17,9 @@ using namespace std;
 class MujocoSimulationBridge{
   public:
     MujocoSimulationBridge(System<double> * sys, const string mj_xml_file):_system(sys) {
-      printf("In\n");
         _mjModel=mj_loadXML((mj_xml_file).c_str(), NULL, error, 1000);
         _mjData=mj_makeData(_mjModel);
+      printf("In\n");
         mj_resetDataKeyframe(_mjModel, _mjData, 0);
       printf("Out\n");
     }

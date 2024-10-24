@@ -103,6 +103,7 @@ mjModel* mj_loadXML(const char* filename, const mjVFS* vfs,
       ParseXML(filename, vfs, error, error_sz),
       [](mjSpec* s) { mj_deleteSpec(s); });
   if (!spec) {
+    printf("Failed to parse XML\n");
     return nullptr;
   }
 
@@ -110,6 +111,7 @@ mjModel* mj_loadXML(const char* filename, const mjVFS* vfs,
   mjModel* m = mj_compile(spec.get(), vfs);
   if (!m) {
     mjCopyError(error, mjs_getError(spec.get()), error_sz);
+    printf("Failed to compile model\n");
     return nullptr;
   }
 

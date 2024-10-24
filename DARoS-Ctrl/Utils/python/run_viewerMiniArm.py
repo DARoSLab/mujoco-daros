@@ -224,11 +224,11 @@ class JPosCtrl:
     target_position = self.desired_position.copy()
     if self.d.time < self.resting_time:
       # resting position
-      target_position = self.d.qpos.copy()
-      self.init_qpos = self.d.qpos.copy()
+      target_position = self.d.qpos[:6].copy()
+      self.init_qpos = self.d.qpos[:6].copy()
     elif self.d.time < self.trasit_time + self.resting_time:
       # moving toward desired position
-      target_position = self.init_qpos + (self.desired_position - self.init_qpos) * (self.d.time - self.resting_time) / self.trasit_time
+      target_position = self.init_qpos[:6] + (self.desired_position - self.init_qpos[:6]) * (self.d.time - self.resting_time) / self.trasit_time
     else:
       # use sin wave to generate desired position
       freq = 0.7
@@ -240,13 +240,13 @@ class JPosCtrl:
       # print(target_position)
 
     # print(d.qpos)
-    position_error = target_position - self.d.qpos
+    position_error = target_position - self.d.qpos[:6]
 
     # Calculate joint velocity
     velocity = self.d.qvel
 
     # Calculate control signal
-    control_signal = self.kp * position_error - self.kd * velocity
+    control_signal = self.kp * position_error[:6] - self.kd * velocity[:6]
 
     # Apply control signal to joints
     self.d.ctrl = control_signal
@@ -529,6 +529,7 @@ if __name__ == '__main__':
   dir_path = os.path.dirname(os.path.realpath(__file__))
 
   def main(argv) -> None:
-    launch_from_path(dir_path + "/../Robots/MiniArm/miniArm.xml")
+    # launch_from_path(dir_path + "/../../Systems/MiniArmSystem/Robot/miniArm.xml")
+    launch_from_path(dir_path + "/../../Systems/MiniArmSystem/Robot/miniArmTest.xml")
 
   app.run(main)
