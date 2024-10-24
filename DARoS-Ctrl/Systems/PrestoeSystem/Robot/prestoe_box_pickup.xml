@@ -202,12 +202,13 @@
     </body>
   </body>
   <!-- add a floating box -->
-  <!-- <body name="box_object" pos="0.55 0 0.7"> -->
-    <!-- <inertial pos="0.0 0. 0.0" quat="1 0 0 0" mass="0.01" diaginertia="314898.04974e-6 47419.11099e-6 292494.07567e-6"/> -->
+  <body name="box_object" pos="0.55 0 0.7">
+    <inertial pos="0.0 0. 0.0" quat="1 0 0 0" mass="0.01" diaginertia="314898.04974e-6 47419.11099e-6 292494.07567e-6"/>
     <!-- <geom type="box" size="0.1 0.13 0.5" conaffinity="1" friction = "0.1 0.1 0.1" material="red_material"/> -->
-    <!-- <freejoint/> -->
-    <!-- <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/> -->
-  <!-- </body> -->
+    <geom type="box" size="0.1 0.13 0.5" material="red_material" friction = "0.1 0.1 0.1"/>
+    <freejoint/>
+  </body>
+
   </worldbody>
 
   <actuator>
@@ -240,13 +241,6 @@
     <motor name="L_elbow_pitch" joint="L_elbowpitch" ctrllimited="true" ctrlrange="-9 9"/>
   </actuator>
 
-  <!-- <equality> -->
-    <!-- <weld body1="torso_link" body2="world" relpose="0 0 -1.4 1 0 0 0"/> -->
-    <!-- <weld body1="torso_link" body2="pelvis" />/
-    <weld body1="R_hipyaw_link" body2="pelvis" />
-    <weld body1="R_hipyaw_link" body2="R_hiproll_link" />
-    <weld body1="R_hiproll_link" body2="R_hippitch_link" /> -->
-  <!-- </equality> -->
   <keyframe>
     <!-- <key name="init_pose" qpos="0 0 0.68919842 1 0 0 0 0 0 0 -1.02675541724 1.918911862865 -0.89215611402 0 0 0 0 -1.02675541724 1.918911862865 -0.89215611402 0 0 0 0 0 0 0 0 0 0" /> -->
     <!-- <key name="init_pose" qpos="0.09638154 0 0.592 0.9455185 0 0.3255683 0 0 0 0 -1.88496 2.0944 -0.872665 0 0 0 0 -1.88496 2.0944 -0.872665 0 0 0 0 0 0 0 0 0 0" qvel="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" /> -->
@@ -257,7 +251,7 @@
                                 -0.026 0.0255 -0.68 0.82 -0.445 -0.06 0.0 
                                 0.3 0 0 -0.9 
                                 -0.3 0 0 -0.9
-                                0.45 0 0.7
+                                0.55 0 0.7
                                 1 0 0 0" 
                                 qvel="0 0 0 
                                 0 0 0 

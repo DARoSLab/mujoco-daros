@@ -1269,11 +1269,9 @@ static void freeDataBuffers(mjData* d) {
 
 // allocate and initialize raw mjData structure
 void mj_makeRawData(mjData** dest, const mjModel* m) {
-printf("mj_makeRawData\n");
   intptr_t offset = 0;
   int allocate = *dest ? 0 : 1;
   mjData* d = NULL;
-printf("11\n");
   // allocate mjData
   if (!allocate) {
     d = *dest;
@@ -1282,18 +1280,13 @@ printf("11\n");
     d = (mjData*) mju_malloc(sizeof(mjData));
   }
 
-printf("22\n");
   if (!d) {
-printf("22-1\n");
     mjERROR("could not allocate mjData");
-printf("22-2\n");
   }
-printf("22-3\n");
 
   // prepare symbols needed by xmacro
   MJDATA_POINTERS_PREAMBLE(m);
 
-printf("33\n");
   // compute buffer size
   d->nbuffer = 0;
   d->buffer = d->arena = NULL;
@@ -1304,7 +1297,6 @@ printf("33\n");
     return;                                                                  \
   }
 
-printf("44\n");
   MJDATA_POINTERS
 #undef X
 
@@ -1317,7 +1309,6 @@ printf("44\n");
     if (allocate) mju_free(d);
     mjERROR("could not allocate mjData buffer");
   }
-printf("55\n");
 
   // allocate arena
   d->arena = mju_malloc(d->narena);
@@ -1327,7 +1318,6 @@ printf("55\n");
     mjERROR("could not allocate mjData arena");
   }
 
-printf("66\n");
   // set pointers into buffer
   mj_setPtrData(m, d);
 
@@ -1337,12 +1327,10 @@ printf("66\n");
   // clear nplugin (overwritten by _initPlugin)
   d->nplugin = 0;
 
-printf("77\n");
   // copy pointer if allocated here
   if (allocate) {
     *dest = d;
   }
-printf("88\n");
 }
 
 
@@ -1350,15 +1338,10 @@ printf("88\n");
 // allocate and initialize mjData structure
 mjData* mj_makeData(const mjModel* m) {
   mjData* d = NULL;
-  printf("mj_makeData\n");
   mj_makeRawData(&d, m);
-  printf("1\n");
   if (d) {
-  printf("2\n");
     mj_initPlugin(m, d);
-  printf("2\n");
     mj_resetData(m, d);
-  printf("2\n");
   }
   return d;
 }

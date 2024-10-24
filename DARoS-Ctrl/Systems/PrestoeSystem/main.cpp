@@ -8,8 +8,8 @@ int main(int argc, char** argv) {
   if(sim){ // Simulation
     PrestoeSystem<double> prestoe_sys(THIS_COM"/Systems/PrestoeSystem/Configs/prestoe_sim_setup.yaml");
     PrestoeMJSimulationBridge sim_bridge(&prestoe_sys, 
-    //  THIS_COM"/Systems/PrestoeSystem/Robot/prestoe.xml");
-     THIS_COM"/Systems/PrestoeSystem/Robot/prestoe_box_pickup.xml");
+     THIS_COM"/Systems/PrestoeSystem/Robot/prestoe.xml");
+    //  THIS_COM"/Systems/PrestoeSystem/Robot/prestoe_box_pickup.xml");
     sim_bridge.run();
 
   }else{ // Robot Control
