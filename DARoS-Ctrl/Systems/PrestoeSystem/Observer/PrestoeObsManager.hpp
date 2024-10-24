@@ -39,6 +39,7 @@ class CheaterModeObserver: public Observer<T>{
     virtual ~CheaterModeObserver(){ }
 
     virtual void Update(){
+      // std::cout<<_mjData->qpos<<std::endl;
       for(size_t i(0); i<prestoe::nDoF; i++){
         _q[i] = static_cast<T>(_mjData->qpos[i]);
         _dq[i] = static_cast<T>(_mjData->qvel[i]);
