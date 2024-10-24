@@ -1,4 +1,8 @@
-target_height     : 0.85
+target_height     : 0.95
+
+x_pos_offset: -0.024
+z_swing_amp: 0.0
+z_swing_freq: 0.5
 
 Kp: [20, 
      10.0, 10.0, 10.0, 5, 5, 5, 10.0, 
@@ -12,14 +16,11 @@ Kd: [5,
      5, 5, 5, 5,
      5, 5, 5, 5]
 
+
+
 WBC_Kp_ori            : [150, 150, 150]
 WBC_Kd_ori            : [3, 3, 3]
 WBC_Kp_body           : [200, 200, 200]
 WBC_Kd_body           : [3, 3, 3]
-WBC_Kp_joint          : 200
-WBC_Kd_joint          : 3
-
-MAX_REACTION_FORCE    : 584.539834      # 18.8114 * 9.81
-FloatingBaseWeight    : 0.1
-REACTION_FORCE_Z_WEIGHT : 10
-REACTION_FORCE_X_WEIGHT : 1
+WBC_Kp_joint          : 100
+WBC_Kd_joint          : 10

@@ -1,21 +1,21 @@
-#include "PrestoeStandCtrl.hpp"
+#include "PrestoeBoxPickupCtrl.hpp"
 #include <WBIC_FB/ContactSet/SingleContact.hpp>
 #include <WBIC_FB/TaskSet/BodyOriTask.hpp>
 #include <WBIC_FB/TaskSet/JPosTask.hpp>
-#include <WBIC_FB/TaskSet/BodyPosTask.hpp>
+#include <WBIC_FB/TaskSet/CentroidLinearMomentumTask.hpp>
 #include <WBIC_FB/TaskSet/LinkPosTask.hpp>
 #include <ParamHandler/ParamHandler.hpp>
 
 template<typename T>
-PrestoeStandCtrl<T>::PrestoeStandCtrl(const FloatingBaseModel<T> * model, 
+PrestoeBoxPickupCtrl<T>::PrestoeBoxPickupCtrl(const FloatingBaseModel<T> * model, 
 const std::string & config_file): 
  WBC_Ctrl<T>(model)
 {
   _body_ori_task = new BodyOriTask<T>(this->_model);
   _jpos_task = new JPosTask<T>(this->_model);
-  _body_pos_task = new BodyPosTask<T>(this->_model);
+  _com_task = new CentroidLinearMomentumTask<T>(this->_model);
 
-  this->_wbic_data->_W_rf = DVec<T>::Constant(3*_num_contact, 100.);
+  this->_wbic_data->_W_rf = DVec<T>::Constant(3*_num_contact, 10.);
   for(size_t i(0); i<_num_contact; ++i){
     _foot_contact[i] = new SingleContact<T>(this->_model, prestoe_contact::rheel + i);
     // this->_wbic_data->_W_rf[3*i+2] = 1;
@@ -24,22 +24,20 @@ const std::string & config_file):
 }
 
 template<typename T>
-void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
-  // printf("PrestoeStandCtrl<T>::_ContactTaskUpdate\n");
-  _input_data = static_cast<PrestoeStandCtrlData<T>* >(input);
+void PrestoeBoxPickupCtrl<T>::_ContactTaskUpdate(void* input){
+  _input_data = static_cast<PrestoeBoxPickupCtrlData<T>* >(input);
 
   _CleanUp();
   Vec3<T> zero_vec3; zero_vec3.setZero();
 
    // Body ori task
   _quat_des = ori::rpyToQuat(_input_data->pBody_RPY_des);
-  _body_ori_task->UpdateTask(&_quat_des, _input_data->vBody_Ori_des, zero_vec3);
+  _body_ori_task->UpdateTask(&_quat_des, zero_vec3, zero_vec3);
   this->_task_list.push_back(_body_ori_task);
  
-  // body pos task
-  _body_pos_task->UpdateTask(&(_input_data->pBody_des), 
-      _input_data->vBody_des, _input_data->aBody_des);
-  this->_task_list.push_back(_body_pos_task);
+  // com task
+  _com_task->UpdateTask(&(_input_data->pCoM_des), zero_vec3, zero_vec3); 
+  this->_task_list.push_back(_com_task);
 
    // Contact     
   for(size_t i(0); i<_num_contact; ++i){
@@ -54,31 +52,27 @@ void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
 }
 
 template<typename T>
-void PrestoeStandCtrl<T>::_ReadConfig(const std::string & config_file){
+void PrestoeBoxPickupCtrl<T>::_ReadConfig(const std::string & config_file){
   ParamHandler handler(config_file);
-  handler.getEigenVec("WBC_Kp_body", ((BodyPosTask<T>*)_body_pos_task)->_Kp );
-  handler.getEigenVec("WBC_Kd_body", ((BodyPosTask<T>*)_body_pos_task)->_Kd );
-  // pretty_print(((BodyPosTask<T>*)_body_pos_task)->_Kp, std::cout, "Kp body");
+  handler.getEigenVec("WBC_Kp_CoM", ((CentroidLinearMomentumTask<T>*)_com_task)->_Kp );
+  handler.getEigenVec("WBC_Kd_CoM", ((CentroidLinearMomentumTask<T>*)_com_task)->_Kd );
   handler.getEigenVec("WBC_Kp_ori", ((BodyOriTask<T>*)_body_ori_task)->_Kp );
   handler.getEigenVec("WBC_Kd_ori", ((BodyOriTask<T>*)_body_ori_task)->_Kd );
  }
 
 
 template<typename T>
-void PrestoeStandCtrl<T>::_CleanUp(){
+void PrestoeBoxPickupCtrl<T>::_CleanUp(){
   this->_contact_list.clear();
   this->_task_list.clear();
 }
 
 template<typename T>
-void PrestoeStandCtrl<T>::_LCM_PublishData() {
+void PrestoeBoxPickupCtrl<T>::_LCM_PublishData() {
 
   for(size_t i(0); i<3; ++i){
-    this->_wbc_data_lcm.body_pos_cmd[i] = _input_data->pBody_des[i];
-    this->_wbc_data_lcm.body_vel_cmd[i] = _input_data->vBody_des[i];
     this->_wbc_data_lcm.body_ori_cmd[i] = _quat_des[i];
     this->_wbc_data_lcm.body_rpy_cmd[i] = _input_data->pBody_RPY_des[i];
-    this->_wbc_data_lcm.body_ang_vel_cmd[i] = _input_data->vBody_Ori_des[i];
 
     Quat<T> quat = this->_state->bodyOrientation;
     Mat3<T> Rot = ori::quaternionToRotationMatrix(quat);
@@ -99,13 +93,13 @@ void PrestoeStandCtrl<T>::_LCM_PublishData() {
 }
 
 template<typename T>
-PrestoeStandCtrl<T>::~PrestoeStandCtrl(){
+PrestoeBoxPickupCtrl<T>::~PrestoeBoxPickupCtrl(){
   delete _body_ori_task;
   delete _jpos_task;
-  delete _body_pos_task;
+  delete _com_task;
   for(size_t i(0); i < _num_contact; ++i){
     delete _foot_contact[i];
   }
 }
-template class PrestoeStandCtrl<float>;
-template class PrestoeStandCtrl<double>;
+template class PrestoeBoxPickupCtrl<float>;
+template class PrestoeBoxPickupCtrl<double>;

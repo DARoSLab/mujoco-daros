@@ -1,36 +1,37 @@
-#include "BalanceStandState.hpp"
+#include "BoxPickupState.hpp"
 #include <pretty_print.h>
 #include <utilities.h>
 #include <ParamHandler/ParamHandler.hpp>
 #include <Command.hpp>
 #include <PrestoeFBModel.h>
 
-#include <WBC_Prestoe/PrestoeStandCtrl/PrestoeStandCtrl.hpp>
+#include <WBC_Prestoe/PrestoeBoxPickupCtrl/PrestoeBoxPickupCtrl.hpp>
 #include <PrestoeObsManager.hpp>
 
 template <typename T>
-BalanceStandState<T>::BalanceStandState(ObserverManager<T>* obs_manager, PrestoeSystem<T>* prestoe_system):
+BoxPickupState<T>::BoxPickupState(ObserverManager<T>* obs_manager, PrestoeSystem<T>* prestoe_system):
   _obs_manager(obs_manager),
   State<T>(prestoe_system){
 
   PrestoeFBModel<T>::buildFBModel(_fb_model, false);
   // PrestoeFBModel<T>::buildFBModel(_fb_model, true);
   _fb_state = _fb_model._state;
+  std::string config_file = THIS_COM"/Systems/PrestoeSystem/Configs/box-pickup_state.yaml";
 
-  _ReadConfig(THIS_COM"/Systems/PrestoeSystem/Configs/standing_state.yaml");
+  _ReadConfig(config_file);
   _jtorque_pos_cmd = new JTorquePosCommand<T>(prestoe::num_act_joint);
 
-  _wbc_ctrl = new PrestoeStandCtrl<T>(&_fb_model, THIS_COM"/Systems/PrestoeSystem/Configs/standing_state.yaml");
-  _wbc_data = new PrestoeStandCtrlData<T>();
+  _wbc_ctrl = new PrestoeBoxPickupCtrl<T>(&_fb_model, config_file);
+  _wbc_data = new PrestoeBoxPickupCtrlData<T>();
 
   _wbc_ctrl->setFloatingBaseWeight(10000.);
   _ini_jpos = DVec<T>::Zero(prestoe::num_act_joint);
 
-  printf("[Balance Stand State] Constructed\n");
+  printf("[Box Pickup State] Constructed\n");
 }
 
 template <typename T>
-void BalanceStandState<T>::OnEnter() {
+void BoxPickupState<T>::OnEnter() {
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
@@ -43,29 +44,30 @@ void BalanceStandState<T>::OnEnter() {
   Quat<T> quat = cheater_mode_obs->_q.segment(3,4);
   _ini_body_ori_rpy = quatToRPY(quat);
 
-  _mid_pos_cps.setZero();
+  _ini_com = _ini_body_pos + _fb_model.getComPosWorld();
 
+  _mid_pos_cps.setZero();
   for(size_t i(0); i<prestoe_contact::num_foot_contact; ++i){
-    // pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
+    pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
     _mid_pos_cps += _fb_model._pGC[prestoe_contact::rheel + i]/prestoe_contact::num_foot_contact;
   }
 
   this->_state_time = 0.0;
 
   // pretty_print(_ini_body_ori_rpy, std::cout, "body rpy");
-  // pretty_print(_mid_pos_cps, std::cout, "[Balance Stand] middle of cps");
-  printf("[Balance Stand] On Enter\n");
+  pretty_print(_mid_pos_cps, std::cout, "[Box Pick Up] middle of cps");
+  printf("[Box Pick Up] On Enter\n");
 }
 
 template <typename T>
-void BalanceStandState<T>::RunNominal() {
+void BoxPickupState<T>::RunNominal() {
   _UpdateModel();
   _KeepPostureStep();
   _UpdateCommand();
 }
 
 template<typename T>
-void BalanceStandState<T>::_UpdateCommand(){
+void BoxPickupState<T>::_UpdateCommand(){
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
@@ -77,36 +79,18 @@ void BalanceStandState<T>::_UpdateCommand(){
 }
 
 template <typename T>
-void BalanceStandState<T>::_KeepPostureStep() {
+void BoxPickupState<T>::_KeepPostureStep() {
     this->_state_time += this->_sys_info._ctrl_dt;
     T curr_time = this->_state_time;
 
-    T standingDuration= 5;
-    T des_height =  smooth_change(_ini_body_pos[2], _targetHeight, standingDuration, curr_time);
-
-    if(curr_time > standingDuration){
-      des_height = _targetHeight + _z_swing_amp * sin(2.0*M_PI*_z_swing_freq*curr_time);
-    }
-
-    //joints and orientation initialization
-    _wbc_data->pBody_RPY_des.setZero();
     _wbc_data->jpos_des = _ini_jpos;
     //setting orientation targets
+    _wbc_data->pBody_RPY_des.setZero();
     _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1];
-    _wbc_data->pBody_RPY_des[1] = smooth_change<T>(_ini_body_ori_rpy[1], 0.3, standingDuration, curr_time);
 
-    //setting COM targets
-    // _wbc_data->pBody_des = _mid_pos_cps;
-    _wbc_data->pBody_des = _ini_body_pos;
-    _wbc_data->pBody_des[0] += _x_pos_offset;
-
-    //stand up to a target height
-    // _wbc_data->pBody_des[2] = _ini_body_pos[2];
-    _wbc_data->pBody_des[2] = des_height;
-
-    _wbc_data->vBody_des.setZero();
-    _wbc_data->aBody_des.setZero();
-    _wbc_data->vBody_Ori_des.setZero();
+    //setting COM target
+    _wbc_data->pCoM_des = _mid_pos_cps;
+    _wbc_data->pCoM_des[2] = _ini_com[2];
 
     for (size_t i(0); i<prestoe_contact::num_foot_contact; ++i) _wbc_data->Fr_des[i].setZero();
 
@@ -114,7 +98,7 @@ void BalanceStandState<T>::_KeepPostureStep() {
 }
 
 template<typename T>
-void BalanceStandState<T>::_UpdateModel(){
+void BoxPickupState<T>::_UpdateModel(){
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
@@ -154,19 +138,13 @@ void BalanceStandState<T>::_UpdateModel(){
 }
 
 template<typename T>
-void BalanceStandState<T>::_ReadConfig(const std::string & file_name) {
+void BoxPickupState<T>::_ReadConfig(const std::string & file_name) {
   ParamHandler param_handler(file_name);
-  param_handler.getValue("target_height", _targetHeight);
-  param_handler.getValue("x_pos_offset", _x_pos_offset);
-  param_handler.getValue("z_swing_amp", _z_swing_amp);
-  param_handler.getValue("z_swing_freq", _z_swing_freq);
 
   param_handler.getEigenVec("Kp", _Kp);
   param_handler.getEigenVec("Kd", _Kd);
-  // pretty_print(_Kp, std::cout, "Kp");
-
 }
 
 
-template class BalanceStandState<float>;
-template class BalanceStandState<double>;
+template class BoxPickupState<float>;
+template class BoxPickupState<double>;

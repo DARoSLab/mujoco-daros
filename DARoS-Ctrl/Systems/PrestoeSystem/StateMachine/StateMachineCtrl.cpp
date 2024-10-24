@@ -2,6 +2,7 @@
 #include <PrestoeObsManager.hpp>
 #include "JPosCtrlState.hpp"
 #include "BalanceStandState.hpp"
+#include "BoxPickupState.hpp"
 
 template <typename T>
 StateMachineCtrl<T>::StateMachineCtrl(ObserverManager<T>* obs_manager, PrestoeSystem<T>* sys) {
@@ -9,6 +10,7 @@ StateMachineCtrl<T>::StateMachineCtrl(ObserverManager<T>* obs_manager, PrestoeSy
   _state_list.resize(StateList::NUM_STATE);
   _state_list[StateList::JOINT_PD] = new JPosCtrlState<T>(obs_manager, sys);
   _state_list[StateList::BALANCE_STAND] = new BalanceStandState<T>(obs_manager, sys);
+  _state_list[StateList::BOX_PICKUP] = new BoxPickupState<T>(obs_manager, sys);
   
   printf("[State Machine Control] Constructed\n");
   _Initialize();
@@ -19,7 +21,9 @@ void StateMachineCtrl<T>::_Initialize() {
   // Initialize a new FSM State with the Passive FSM State
   // because this function called before the system state is updated
   // _curr_State = _state_list[StateList::JOINT_PD];
-  _curr_State = _state_list[StateList::BALANCE_STAND];
+  // _curr_State = _state_list[StateList::BALANCE_STAND];
+  _curr_State = _state_list[StateList::BOX_PICKUP];
+
   // Initialize to not be in transition
   _next_State = _curr_State;
 }

@@ -20,6 +20,7 @@ add_library(prestoe_ctrl_lib STATIC
                       StateMachine/StateMachineCtrl.cpp
                       StateMachine/JPosCtrlState.cpp
                       StateMachine/BalanceStandState.cpp
+                      StateMachine/BoxPickupState.cpp
                       ${WBC_SRC}
                       )
 

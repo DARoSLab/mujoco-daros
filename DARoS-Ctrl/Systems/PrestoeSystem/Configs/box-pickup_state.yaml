@@ -1,47 +1,23 @@
-use_rc: 0
-cheater_mode: 1
-
-Kp_ori            : [200, 200, 200]
-Kd_ori            : [3, 3, 3]
-Kp_body           : [200, 200, 200]
-Kd_body           : [3, 3, 3]
-Kp_foot           : [1000, 800, 1000]
-Kd_foot           : [60, 50, 60]
-Kp_joint          : 200
-Kd_joint          : 3
+target_height     : 0.95
 
 
-gravity         : [0, 0, -9.81]
-mu              : 0.7
+Kp: [20, 
+     10.0, 10.0, 10.0, 5, 5, 5, 10.0, 
+     10.0, 10.0, 10.0, 5, 5, 5, 10.0, 
+     20, 20, 20, 20,
+     20, 20, 20, 20]
+
+Kd: [5, 
+     5, 5, 5, 1, 1, 1, 5, 
+     5, 5, 5, 1, 1, 1, 5, 
+     5, 5, 5, 5,
+     5, 5, 5, 5]
 
 
-# Gait parameters (related to timing)
-gait_num_segments     : 10 #14 10
-gait_right_offset     : 0
-gait_left_offset      : 5 #7 5
-gait_duration         : 5 #8 6
-# Gait parameters (related to foot placement)
-gait_swing_height     : 0.15
-stairstep_height      : 0.2
-gait_toe_offset       : 0.055
-gait_heel_offset      : -0.05
-gait_foot_offset      : 0.025    # foot offset from center of body
-gait_vel_gain         : 0.33
-# Casadi parameters
-CAS_dt                : 0.05
-CAS_pred_hor          : 10
-CAS_x_des             : [0,0,0.6] 
-CAS_v_des             : [0.5,0,0]
-CAS_w_des             : [0,0,0]
-CAS_RPY_des           : [0,0,0]
-CAS_Q_X               : [0,20,200]
-CAS_Q_Xd              : [80,1,1]
-CAS_Q_R               : [80,80,80]
-CAS_Q_W               : [1,1,1]
-CAS_Q_U               : 0.00000001
-CAS_opt_details       : 0.0
 
-MAX_REACTION_FORCE    : 584.539834      # 18.8114 * 9.81
-FloatingBaseWeight    : 0.1
-REACTION_FORCE_Z_WEIGHT : 10
-REACTION_FORCE_X_WEIGHT : 1
+WBC_Kp_ori            : [150, 150, 150]
+WBC_Kd_ori            : [3, 3, 3]
+WBC_Kp_CoM           : [200, 200, 200]
+WBC_Kd_CoM           : [3, 3, 3]
+WBC_Kp_joint          : 100
+WBC_Kd_joint          : 10
