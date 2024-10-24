@@ -13,14 +13,14 @@ BalanceStandState<T>::BalanceStandState(ObserverManager<T>* obs_manager, Prestoe
   _obs_manager(obs_manager),
   State<T>(prestoe_system){
 
-  // PrestoeFBModel<T>::buildFBModel(_fb_model, false);
-  PrestoeFBModel<T>::buildFBModel(_fb_model, true);
+  PrestoeFBModel<T>::buildFBModel(_fb_model, false);
+  // PrestoeFBModel<T>::buildFBModel(_fb_model, true);
   _fb_state = _fb_model._state;
 
-  _ReadConfig(THIS_COM"/PrestoeSystem/Configs/standing_state.yaml");
+  _ReadConfig(THIS_COM"/Systems/PrestoeSystem/Configs/standing_state.yaml");
   _jtorque_pos_cmd = new JTorquePosCommand<T>(prestoe::num_act_joint);
 
-  _wbc_ctrl = new PrestoeStandCtrl<T>(&_fb_model, THIS_COM"/PrestoeSystem/Configs/standing_ctrl.yaml");
+  _wbc_ctrl = new PrestoeStandCtrl<T>(&_fb_model, THIS_COM"/Systems/PrestoeSystem/Configs/standing_state.yaml");
   _wbc_data = new PrestoeStandCtrlData<T>();
 
   _wbc_ctrl->setFloatingBaseWeight(10000.);
@@ -46,15 +46,15 @@ void BalanceStandState<T>::OnEnter() {
   _mid_pos_cps.setZero();
 
   for(size_t i(0); i<prestoe_contact::num_foot_contact; ++i){
-    pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
+    // pretty_print(_fb_model._pGC[prestoe_contact::rheel + i], std::cout, "contact pos");
     _mid_pos_cps += _fb_model._pGC[prestoe_contact::rheel + i]/prestoe_contact::num_foot_contact;
   }
 
   this->_state_time = 0.0;
 
-  pretty_print(_ini_body_ori_rpy, std::cout, "body rpy");
-  pretty_print(_mid_pos_cps, std::cout, "[Balance Stand] middle of cps");
-  std::cout << "[Balance Stand] On Enter is done" << std::endl;
+  // pretty_print(_ini_body_ori_rpy, std::cout, "body rpy");
+  // pretty_print(_mid_pos_cps, std::cout, "[Balance Stand] middle of cps");
+  printf("[Balance Stand] On Enter\n");
 }
 
 template <typename T>
@@ -82,20 +82,27 @@ void BalanceStandState<T>::_KeepPostureStep() {
     T curr_time = this->_state_time;
 
     T standingDuration= 5;
+    T des_height =  smooth_change(_ini_body_pos[2], _targetHeight, standingDuration, curr_time);
+
+    if(curr_time > standingDuration){
+      des_height = _targetHeight + 0.12 * sin(2.0*M_PI*0.5*curr_time);
+    }
 
     //joints and orientation initialization
     _wbc_data->pBody_RPY_des.setZero();
     _wbc_data->jpos_des = _ini_jpos;
     //setting orientation targets
-    // _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1];
-    _wbc_data->pBody_RPY_des[1] = smooth_change<T>(_ini_body_ori_rpy[1], 0., standingDuration, curr_time);
+    _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1];
+    _wbc_data->pBody_RPY_des[1] = smooth_change<T>(_ini_body_ori_rpy[1], 0.3, standingDuration, curr_time);
 
     //setting COM targets
-    _wbc_data->pBody_des = _mid_pos_cps;
+    // _wbc_data->pBody_des = _mid_pos_cps;
+    _wbc_data->pBody_des = _ini_body_pos;
+    _wbc_data->pBody_des[0] -= 0.015;
 
     //stand up to a target height
     // _wbc_data->pBody_des[2] = _ini_body_pos[2];
-    _wbc_data->pBody_des[2] = smooth_change(_ini_body_pos[2], _targetHeight, standingDuration, curr_time);
+    _wbc_data->pBody_des[2] = des_height;
 
     _wbc_data->vBody_des.setZero();
     _wbc_data->aBody_des.setZero();
@@ -104,12 +111,10 @@ void BalanceStandState<T>::_KeepPostureStep() {
     for (size_t i(0); i<prestoe_contact::num_foot_contact; ++i) _wbc_data->Fr_des[i].setZero();
 
     _wbc_ctrl->run(_wbc_data);
-
 }
 
 template<typename T>
 void BalanceStandState<T>::_UpdateModel(){
-  printf("[Balance Stand] Update Model\n");
   CheaterModeObserver<T>* cheater_mode_obs = 
     dynamic_cast<CheaterModeObserver<T>*>(
       _obs_manager->_observers[PrestoeObsList::CheaterMode]);
@@ -153,6 +158,7 @@ void BalanceStandState<T>::_ReadConfig(const std::string & file_name) {
   param_handler.getValue("target_height", _targetHeight);
   param_handler.getEigenVec("Kp", _Kp);
   param_handler.getEigenVec("Kd", _Kd);
+  // pretty_print(_Kp, std::cout, "Kp");
 }
 
 

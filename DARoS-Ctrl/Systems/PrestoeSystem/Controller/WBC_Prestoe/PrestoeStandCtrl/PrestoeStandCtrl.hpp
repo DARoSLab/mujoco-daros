@@ -43,19 +43,6 @@ class PrestoeStandCtrl: public WBC_Ctrl<T>{
 
     //Vec3<T> _Fr_result[humanoid::num_leg];
     Quat<T> _quat_des;
-    DVec<T> _centroid_mom_pos_des = DVec<T>::Zero(7);
-
-    Vec3<T> _Kp_body = {150., 200., 80.};
-    Vec3<T> _Kd_body = {1.3, 2.0, 1.3};
-
-    Vec3<T> _Kp_ori = {150, 150, 10};
-    Vec3<T> _Kd_ori = {2.5, 1.5, 0.5};
-
-    Vec3<T> _Kp_cam = {0, 0, 0};
-    Vec3<T> _Kd_cam = {5, 5, 5};
-
-    Vec3<T> _Kp_clm = {100, 100, 200};
-    Vec3<T> _Kd_clm = {2., 2., 5.};
 };
 
 #endif

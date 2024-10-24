@@ -60,7 +60,7 @@ void WBC_Ctrl<T>::_ComputeWBC() {
                               _des_jpos, _des_jvel);
   _wbic->UpdateSetting(_A, _Ainv, _coriolis, _grav);
   _wbic->MakeTorque(_tau_ff, _wbic_data);
- //std::cout<<"_ComputeLineWBC: "<<timerWBC.getMs()<<std::endl;
+//  std::cout<<"_ComputeLineWBC: "<<timerWBC.getMs()<<std::endl;
   // std::cout<<"_qddot: "<<_wbic_data->_qddot.transpose()<<std::endl;
   // std::cout<<"_Fr: "<<_wbic_data->_Fr.transpose()<<std::endl;
 }

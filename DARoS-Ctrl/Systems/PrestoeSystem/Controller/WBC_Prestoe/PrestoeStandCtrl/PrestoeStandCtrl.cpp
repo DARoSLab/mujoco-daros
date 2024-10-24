@@ -17,24 +17,15 @@ const std::string & config_file):
 
   this->_wbic_data->_W_rf = DVec<T>::Constant(3*_num_contact, 100.);
   for(size_t i(0); i<_num_contact; ++i){
-    _foot_contact[i] = new SingleContact<T>(this->_model, prestoe_contact::lheel + i);
+    _foot_contact[i] = new SingleContact<T>(this->_model, prestoe_contact::rheel + i);
     // this->_wbic_data->_W_rf[3*i+2] = 1;
   }
   _ReadConfig(config_file);
 }
 
 template<typename T>
-PrestoeStandCtrl<T>::~PrestoeStandCtrl(){
-  delete _body_ori_task;
-  delete _jpos_task;
-  delete _body_pos_task;
-  for(size_t i(0); i < _num_contact; ++i){
-    delete _foot_contact[i];
-  }
-}
-
-template<typename T>
 void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
+  // printf("PrestoeStandCtrl<T>::_ContactTaskUpdate\n");
   _input_data = static_cast<PrestoeStandCtrlData<T>* >(input);
 
   _CleanUp();
@@ -64,32 +55,14 @@ void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
 
 template<typename T>
 void PrestoeStandCtrl<T>::_ReadConfig(const std::string & config_file){
+  std::cout<<config_file<<std::endl;
   ParamHandler handler(config_file);
-  // DVec<T> dummy_vec;
   handler.getEigenVec("WBC_Kp_body", ((BodyPosTask<T>*)_body_pos_task)->_Kp );
   handler.getEigenVec("WBC_Kd_body", ((BodyPosTask<T>*)_body_pos_task)->_Kd );
-  // for(size_t i(0); i<3; ++i){
-    
-  //   ((BodyOriTask<T>*)_body_ori_task)->_Kp[i] = param->Kp_ori[i];
-  //   ((BodyOriTask<T>*)_body_ori_task)->_Kd[i] = param->Kd_ori[i];
-
-  //   ((CentroidMomentumTask<T>*)_centroid_mom_task)->_Kp[i] = param->Kp_cam[i];
-  //   ((CentroidMomentumTask<T>*)_centroid_mom_task)->_Kd[i] = param->Kd_cam[i];
-
-  //   ((CentroidMomentumTask<T>*)_centroid_mom_task)->_Kp[i+3] = param->Kp_clm[i];
-  //   ((CentroidMomentumTask<T>*)_centroid_mom_task)->_Kd[i+3] = param->Kd_clm[i];
-
-  //   ((BodyPosTask<T>*)_body_pos_task)->_Kp[i] = param->Kp_body[i];
-  //   ((BodyPosTask<T>*)_body_pos_task)->_Kd[i] = param->Kd_body[i];
-
-  //  }
-
-  // for(size_t jindx(0); jindx<prestoe::num_act_joint; ++jindx){
-  //   ((JPosTask<T>*)_jpos_task)->_Kp[jindx] = 105.;
-  //   ((JPosTask<T>*)_jpos_task)->_Kd[jindx] = 10;
-  // }
-
-}
+  // pretty_print(((BodyPosTask<T>*)_body_pos_task)->_Kp, std::cout, "Kp body");
+  handler.getEigenVec("WBC_Kp_ori", ((BodyOriTask<T>*)_body_ori_task)->_Kp );
+  handler.getEigenVec("WBC_Kd_ori", ((BodyOriTask<T>*)_body_ori_task)->_Kd );
+ }
 
 
 template<typename T>
@@ -126,5 +99,14 @@ void PrestoeStandCtrl<T>::_LCM_PublishData() {
   this->_wbcLCM.publish("wbc_lcm_data", &(this->_wbc_data_lcm) );
 }
 
+template<typename T>
+PrestoeStandCtrl<T>::~PrestoeStandCtrl(){
+  delete _body_ori_task;
+  delete _jpos_task;
+  delete _body_pos_task;
+  for(size_t i(0); i < _num_contact; ++i){
+    delete _foot_contact[i];
+  }
+}
 template class PrestoeStandCtrl<float>;
 template class PrestoeStandCtrl<double>;
