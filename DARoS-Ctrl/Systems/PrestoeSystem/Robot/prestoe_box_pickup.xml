@@ -208,7 +208,7 @@
   </body>
 
   <body name="box_object">
-    <inertial pos="0.0 0. 0.0" quat="1 0 0 0" mass="3.5" diaginertia="314898.04974e-7 47419.11099e-7 292494.07567e-7"/>
+    <inertial pos="0.0 0. 0.0" quat="1 0 0 0" mass="6.5" diaginertia="314898.04974e-7 47419.11099e-7 292494.07567e-7"/>
     <!-- <geom type="box" size="0.1 0.13 0.5" conaffinity="1" friction = "0.1 0.1 0.1" material="red_material"/> -->
     <geom type="box" size="0.15 0.16 0.28" material="red_material" friction = "0.7 0.7 0.7"/>
     <freejoint/>
