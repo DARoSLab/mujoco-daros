@@ -22,6 +22,7 @@ class PrestoeSystem: public System<T>{
     StateMachineCtrl<T>* _state_ctrl;
 
   protected:
+    void _ReadConfig(const std::string & file_name);
     bool _initialized = false;
 };
 

@@ -106,7 +106,7 @@ bool BoxPickupState<T>::_RunSequence(size_t idx, T seq_time, const Vec3<T> & com
   _wbc_ctrl->run(_wbc_data);
 
   // If the sequence is not done yet or the sequence index is out of bound, then keep the current sequence 
-  if(seq_time <= _seq_duration[idx] || idx >= _seq_duration.size()){ return false; }
+  if(seq_time <= _seq_duration[idx] || idx+2 > _seq_duration.size()){ return false; }
   else{ return true; } // If the sequence is done, move to the next sequence
 }
 

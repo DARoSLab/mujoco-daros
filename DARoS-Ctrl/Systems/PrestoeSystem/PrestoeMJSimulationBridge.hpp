@@ -7,7 +7,7 @@
 
 class PrestoeMJSimulationBridge: public MujocoSimulationBridge{
   public:
-    PrestoeMJSimulationBridge(System<double> * system, const std::string & mj_xml_file);
+    PrestoeMJSimulationBridge(System<double> * system);
     virtual ~PrestoeMJSimulationBridge(){}
  
   protected:
