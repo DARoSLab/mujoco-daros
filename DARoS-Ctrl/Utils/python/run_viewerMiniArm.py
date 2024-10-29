@@ -218,7 +218,7 @@ class JPosCtrl:
     self.init_qpos = d.qpos.copy()
     self.trasit_time = 3.0
     self.resting_time = 1.0
-    self.desired_position = np.array([0.0, -1.5, 0.0, 1.5, -1.0, 0.0])  # Example desired position
+    self.desired_position = np.array([1.0, -1.5, 0.0, 1.5, -1.0, 0.0])  # Example desired position
   
   def update(self):
     target_position = self.desired_position.copy()
@@ -234,19 +234,19 @@ class JPosCtrl:
       freq = 0.7
       amp = 0.6
       time_offset = self.trasit_time + self.resting_time
-      target_position[1] += amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
+      target_position[0] += amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
       target_position[3] -= amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
       target_position[5] -= 2*amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
       # print(target_position)
 
     # print(d.qpos)
     position_error = target_position - self.d.qpos[:6]
-
     # Calculate joint velocity
     velocity = self.d.qvel
 
     # Calculate control signal
     control_signal = self.kp * position_error[:6] - self.kd * velocity[:6]
+    print(control_signal)
 
     # Apply control signal to joints
     self.d.ctrl = control_signal

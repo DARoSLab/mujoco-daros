@@ -1,0 +1,2 @@
+controller_dt: 0.001
+Mujoco_XML_FileName: 'miniArm.xml'

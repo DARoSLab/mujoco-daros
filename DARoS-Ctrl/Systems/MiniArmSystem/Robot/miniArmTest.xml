@@ -36,7 +36,8 @@
       <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="arm_base" />
 
       <body name="colum_link" pos="-0.06 0 0">
-        <joint name="base_yaw" type="hinge" axis="0 0 1" pos="0 0 0"/>
+        <!-- <joint name="base_yaw" type="hinge" axis="0 0 1" pos="0 0 0"/> -->
+        <joint name="base_yaw"/>
         <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="2.428305" diaginertia="0.00176331 0.00174734 0.000400822"/>
         <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="column_link" material="orange_material"/>
 
@@ -71,10 +72,10 @@
         </body>
       </body>
     </body>
-    <body name="ball" pos="0.5 -0.1 1.3">
+    <!-- <body name="ball" pos="0.5 -0.1 1.3">
       <geom type="sphere" size="0.15" material="red_material"/>
       <freejoint/>
-    </body>
+    </body> -->
   </worldbody>
 <!-- Add actuators for the joints -->
   <actuator>
@@ -85,4 +86,12 @@
     <motor joint="wrist_pitch" ctrlrange="-20 20" gear="1"/>
     <motor joint="wrist_roll" ctrlrange="-20 20" gear="1"/>
   </actuator>
+  <keyframe>
+    <key name="init_pose" qpos="1.125 0 0.92 
+                                0.987 0 0.16"
+                                qvel="0 0 0 
+                                0 0 0" />
+  </keyframe>
+
+
 </mujoco>

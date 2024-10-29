@@ -33,26 +33,26 @@
     <light name="top" pos="0 0 1"/>
 
     <body name="base" euler="0 0 0">
-      <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="arm_base" />
+      <geom type="mesh" contype="0"  conaffinity="0" group="1" density="0" mesh="arm_base" />
 
       <body name="colum_link" pos="-0.06 0 0">
         <joint name="base_yaw" type="hinge" axis="0 0 1" pos="0 0 0"/>
-        <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="2.428305" diaginertia="0.00176331 0.00174734 0.000400822"/>
-        <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="column_link" material="orange_material"/>
+        <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="0.928305" diaginertia="0.00176331 0.00174734 0.000400822"/>
+        <geom type="mesh" contype="0"  conaffinity="0" group="1" density="0" mesh="column_link" material="orange_material"/>
 
         <body name="shoulder_pitch" pos="0 0 0.4">
           <joint name="shoulder_pitch" type="hinge" axis="0 1 0" pos="0 0 0"/>
-          <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="1.428305" diaginertia="0.00176331 0.00174734 0.000400822"/>
+          <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="1.05" diaginertia="0.00176331 0.00174734 0.000400822"/>
           <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="shoulder_pitch" material="blue_material"/>
 
           <body name="UpperArm" pos="0 0 0">
             <joint name="shoulder_roll" type="hinge" axis="1 0 0" pos="0 0 0"/>
-            <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="1.428305" diaginertia="0.00176331 0.00174734 0.000400822"/>
+            <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="1.05" diaginertia="0.00176331 0.00174734 0.000400822"/>
             <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="Arm1" material="green_material"/>
 
             <body name="LowerArm" pos="0.55 0 0">
               <joint name="elbow" type="hinge" axis="0 1 0" pos="0 0 0"/>
-              <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="1.428305" diaginertia="0.00176331 0.00174734 0.000400822"/>
+              <inertial pos="0.03 0 0.0" quat="1 0 0 0" mass="1.05" diaginertia="0.00176331 0.00174734 0.000400822"/>
               <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="Arm2" material="yellow_material"/>
 
               <body name="WristPitch" pos="0.45 0 0">
@@ -62,7 +62,7 @@
 
                 <body name="EE_Frame" pos="0.09 0 0">
                   <joint name="wrist_roll" type="hinge" axis="1 0 0" pos="0 0 0"/>
-                  <inertial pos="0.03 0 0" quat="0.655781 0.264506 0.264514 0.65576" mass="0.3" diaginertia="0.00176331 0.00174734 0.000400822"/>
+                  <inertial pos="0.03 0 0" quat="0.655781 0.264506 0.264514 0.65576" mass="0.7" diaginertia="0.00176331 0.00174734 0.000400822"/>
                   <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="EE_link" material="pink_material"/>
                 </body>
               </body>
@@ -74,11 +74,15 @@
   </worldbody>
 <!-- Add actuators for the joints -->
   <actuator>
-    <motor joint="base_yaw" ctrlrange="-50 50" gear="1"/>
-    <motor joint="shoulder_pitch" ctrlrange="-50 50" gear="1"/>
+    <motor name="act1" joint="base_yaw" ctrllimited="true" ctrlrange="-150 150"/>
+    <motor name="act2" joint="shoulder_pitch" ctrllimited="true" ctrlrange="-150 150"/>
     <motor joint="shoulder_roll" ctrlrange="-50 50" gear="1"/>
     <motor joint="elbow" ctrlrange="-50 50" gear="1"/>
     <motor joint="wrist_pitch" ctrlrange="-20 20" gear="1"/>
     <motor joint="wrist_roll" ctrlrange="-20 20" gear="1"/>
   </actuator>
+  <keyframe>
+    <key name="init_pose" qpos="1 0.3 0 0 0 0"
+                          qvel="0 0 0 0 0 0" />
+  </keyframe>
 </mujoco>
