@@ -33,13 +33,13 @@
     <light name="top" pos="0 0 1"/>
 
     <body name="base" euler="0 0 0">
-      <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="arm_base" />
+      <geom type="mesh" contype="0"  conaffinity="0" group="1" density="0" mesh="arm_base" />
 
       <body name="colum_link" pos="-0.06 0 0">
         <!-- <joint name="base_yaw" type="hinge" axis="0 0 1" pos="0 0 0"/> -->
         <joint name="base_yaw"/>
         <inertial pos="-0.031984 -1e-08 -0.0289441" quat="0.655781 0.264506 0.264514 0.65576" mass="2.428305" diaginertia="0.00176331 0.00174734 0.000400822"/>
-        <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="column_link" material="orange_material"/>
+        <geom type="mesh" contype="0"  conaffinity="0" group="1" density="0" mesh="column_link" material="orange_material"/>
 
         <body name="shoulder_pitch" pos="0 0 0.4">
           <joint name="shoulder_pitch" type="hinge" axis="0 1 0" pos="0 0 0"/>
