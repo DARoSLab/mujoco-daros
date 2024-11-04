@@ -1,0 +1,7 @@
+sim_mode: 1 # 0: play, 1: record
+sim_duration: 2.0
+
+# Mujoco_XML_FileName: 'prestoe.xml'
+Mujoco_XML_FileName: '/Systems/PrestoeSystem/Robot/prestoe_box_pickup.xml'
+
+# TargetState: 3 # 1: JPosCtrl, 2: Balance Stand, 3: Box Pickup

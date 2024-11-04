@@ -241,6 +241,8 @@ int main(int argc, const char** argv) {
   mjrRect viewport =  mjr_maxViewport(&con);
   int W = viewport.width;
   int H = viewport.height;
+  printf("con resolution: %d, %d\n", con.offWidth, con.offHeight);
+  printf("W: %d, H: %d\n", W, H);
 
   // allocate rgb and depth buffers
   unsigned char* rgb = (unsigned char*)std::malloc(3*W*H);

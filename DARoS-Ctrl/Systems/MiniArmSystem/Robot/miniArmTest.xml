@@ -63,7 +63,7 @@
 
                 <body name="EE_Frame" pos="0.09 0 0">
                   <joint name="wrist_roll" type="hinge" axis="1 0 0" pos="0 0 0"/>
-                  <inertial pos="0.03 0 0" quat="0.655781 0.264506 0.264514 0.65576" mass="0.3" diaginertia="0.00176331 0.00174734 0.000400822"/>
+                  <inertial pos="0.03 0 0" quat="0.655781 0.264506 0.264514 0.65576" mass="0.7" diaginertia="0.0176331 0.0174734 0.00400822"/>
                   <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="EE_link" material="pink_material"/>
                 </body>
               </body>

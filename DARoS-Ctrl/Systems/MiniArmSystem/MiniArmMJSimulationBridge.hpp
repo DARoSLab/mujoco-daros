@@ -7,7 +7,7 @@
 
 class MiniArmMJSimulationBridge: public MujocoSimulationBridge{
   public:
-    MiniArmMJSimulationBridge(System<double> * system);
+    MiniArmMJSimulationBridge(System<double> * system, const std::string & config_file);
     virtual ~MiniArmMJSimulationBridge(){}
  
   protected:

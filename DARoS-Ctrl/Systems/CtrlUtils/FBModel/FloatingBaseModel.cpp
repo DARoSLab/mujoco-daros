@@ -462,7 +462,7 @@ int FloatingBaseModel<T>::addBody(const SpatialInertia<T> &inertia,
         << link_name 
         << "' already exists!"
         << std::endl;
-      assert (0);
+      // assert (0);
       abort();
     }
     _bodyNameMap[link_name] = _nDof - 1;

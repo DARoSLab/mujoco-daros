@@ -23,7 +23,7 @@ class StateMachineCtrl{
     StateMachineCtrl(ObserverManager<T>* obs_manager, 
                      PrestoeSystem<T>* prestoe_system); 
     void RunState();
-    void _Initialize();
+    void Initialize(StateList test_state);
 
     int iter = 0;
     std::vector<State<T> *> _state_list;

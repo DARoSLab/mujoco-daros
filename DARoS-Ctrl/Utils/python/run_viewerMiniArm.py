@@ -214,11 +214,11 @@ class JPosCtrl:
     self.m = m
     self.d = d
     self.kp = 250
-    self.kd = 1.0 
+    self.kd = 10.0 
     self.init_qpos = d.qpos.copy()
     self.trasit_time = 3.0
     self.resting_time = 1.0
-    self.desired_position = np.array([1.0, -1.5, 0.0, 1.5, -1.0, 0.0])  # Example desired position
+    self.desired_position = np.array([-0.5, -1.0, 0.0, 1.5, -1.0, 0.0])  # Example desired position
   
   def update(self):
     target_position = self.desired_position.copy()
@@ -232,7 +232,7 @@ class JPosCtrl:
     else:
       # use sin wave to generate desired position
       freq = 0.7
-      amp = 0.6
+      amp = 0.0
       time_offset = self.trasit_time + self.resting_time
       target_position[0] += amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
       target_position[3] -= amp*(1 - np.cos(2*np.pi * freq* (self.d.time - time_offset)))
@@ -246,7 +246,7 @@ class JPosCtrl:
 
     # Calculate control signal
     control_signal = self.kp * position_error[:6] - self.kd * velocity[:6]
-    print(control_signal)
+    # print(control_signal)
 
     # Apply control signal to joints
     self.d.ctrl = control_signal
@@ -289,7 +289,7 @@ def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
     else:
       time.sleep(0.001)
 
-
+    m.opt.timestep = 0.01
     with simulate.lock():
       if m is not None:
         assert d is not None
@@ -317,6 +317,7 @@ def _physics_loop(simulate: _Simulate, loader: Optional[_InternalLoaderType]):
 
               # Apply noise.
               d.ctrl[i] = ctrl_noise[i]
+              print(ctrl_noise)
 
           # Requested slow-down factor.
           slowdown = 100 / PERCENT_REALTIME[simulate.real_time_index]

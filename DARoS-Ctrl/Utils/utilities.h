@@ -361,7 +361,7 @@ Vec6<T> stringToVec6(const std::string& str) {
 }
 
 inline std::string getLcmUrl(s64 ttl) {
-  assert(ttl >= 0 && ttl <= 255);
+  // assert(ttl >= 0 && ttl <= 255);
   return "udpm://239.255.76.67:7667?ttl=" + std::to_string(ttl);
 }
 

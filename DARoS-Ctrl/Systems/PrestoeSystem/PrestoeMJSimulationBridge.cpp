@@ -7,8 +7,9 @@
 
 using namespace std;
 
-PrestoeMJSimulationBridge::PrestoeMJSimulationBridge(System<double> * sys):
-  MujocoSimulationBridge(sys, sys->getMujocoFile())
+PrestoeMJSimulationBridge::PrestoeMJSimulationBridge(System<double> * sys, 
+                                                     const std::string & config_file):
+  MujocoSimulationBridge(sys, config_file)
 {
   // run simulation before run controller
   _ctrl_time += _system->getCtrlDt();

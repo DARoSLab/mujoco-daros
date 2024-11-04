@@ -20,10 +20,11 @@ class PrestoeSystem: public System<T>{
     // VisualManager<T>* _vis_manager;
 
     StateMachineCtrl<T>* _state_ctrl;
+    StateList _test_state_id;
 
   protected:
     void _ReadConfig(const std::string & file_name);
-    bool _initialized = false;
+    bool _initial_run = true;
 };
 
 #endif

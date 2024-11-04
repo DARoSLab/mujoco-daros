@@ -1,6 +1,11 @@
 <mujoco model="prestoe">
   <compiler angle="radian" meshdir="meshes/"/>
   <option timestep="0.001" integrator="RK4" gravity="0 0 -9.81" />
+  <visual>
+    <map force="0.1" zfar="30"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global offwidth="1200" offheight="900" elevation="-20" azimuth="120"/>
+  </visual>
   <!-- <option solver="Newton" iterations="100"/> -->
   <asset>
     <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512"/> 
