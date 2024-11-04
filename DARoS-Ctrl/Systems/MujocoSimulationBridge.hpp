@@ -95,10 +95,8 @@ class MujocoSimulationBridge{
 
         // glfwSetCursorPosCallback(mj_window, mouse_move_callback);
         glfwSetWindowUserPointer(mj_window, this);
-
         //  Set the scroll callback
         glfwSetScrollCallback(mj_window, scrollCallback);
-
     }
 
     void run(){
@@ -116,6 +114,14 @@ class MujocoSimulationBridge{
       int framecount = 0;
       double fps = 60;
 
+      // Off screen rendering
+      if(_sim_mode == SimMode::RECORD){
+        // set rendering to offscreen buffer
+        mjr_setBuffer(mjFB_OFFSCREEN, &mj_context);
+        if (mj_context.currentBuffer!=mjFB_OFFSCREEN) {
+          std::printf("Warning: offscreen rendering not supported, using default/window framebuffer\n");
+        }
+     }
       // get size of active renderbuffer
       mjrRect viewport =  mjr_maxViewport(&mj_context);
       int W = viewport.width;
@@ -131,16 +137,9 @@ class MujocoSimulationBridge{
       std::FILE* fp = std::fopen("rgb.out", "wb");
       if (!fp) { mju_error("Could not open rgbfile for writing"); }
 
-      // Off screen rendering
-      if(_sim_mode == SimMode::RECORD){
-        // set rendering to offscreen buffer
-        mjr_setBuffer(mjFB_OFFSCREEN, &mj_context);
-        if (mj_context.currentBuffer!=mjFB_OFFSCREEN) {
-          std::printf("Warning: offscreen rendering not supported, using default/window framebuffer\n");
-        }
-     }
             
       while(!glfwWindowShouldClose(mj_window) && _mjData->time< _sim_duration) {
+      // while(_mjData->time< _sim_duration) {
         // render new frame if it is time (or first frame)
         if ((_mjData->time-frametime) > 1./fps || frametime==0) {
           if(_sim_mode == SimMode::RECORD){ // Record mode .....................
@@ -167,16 +166,12 @@ class MujocoSimulationBridge{
               else {  std::printf("."); }
             }
             frametime = _mjData->time;
-            // printf("Time: %f\n", _mjData->time);
-            // printf("record\n");
           } else if(_sim_mode == SimMode::PLAY){ // Play mode ...............
-            // printf("play\n");
             mjv_updateScene(_mjModel, _mjData, &viz_opt, NULL, &mj_cam, mjCAT_ALL, &mj_scene);
             mjr_render(viewport, &mj_scene, &mj_context);
-
             glfwSwapBuffers(mj_window);
-
             glfwPollEvents();
+
             // Get current mouse position
             double xpos, ypos;
             glfwGetCursorPos(mj_window, &xpos, &ypos);
@@ -197,7 +192,6 @@ class MujocoSimulationBridge{
       std::fclose(fp);
       std::free(rgb);
       std::free(depth);
-    
     } // end of run
 
 
