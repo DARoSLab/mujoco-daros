@@ -37,10 +37,6 @@ using ::testing::Pointwise;
 using ::testing::ElementsAreArray;
 using ::testing::Pointwise;
 
-std::vector<mjtNum> AsVector(const mjtNum* array, int n) {
-  return std::vector<mjtNum>(array, array + n);
-}
-
 using AngMomMatTest = MujocoTest;
 
 static constexpr char AngMomTestingModel[] = R"(
@@ -809,6 +805,9 @@ TEST_F(SupportTest, MulMIsland) {
 
 static constexpr char GeomDistanceTestingModel[] = R"(
 <mujoco>
+  <option>
+    <flag nativeccd="enable"/>
+  </option>
   <asset>
     <mesh name="box" scale=".1 .1 .1" vertex="0 0 0  1 0 0  0 1 0  1 1 0
                                               0 0 1  1 0 1  0 1 1  1 1 1"/>
@@ -857,25 +856,20 @@ TEST_F(SupportTest, GeomDistance) {
   EXPECT_THAT(fromto, Pointwise(DoubleNear(eps),
                                 std::vector<mjtNum>{.7, 0, 1, .2, 0, 1}));
 
-  // TODO: b/339596989 - Improve the bounds below (mjc_Convex).
-
   // mesh-sphere (close distmax)
   distmax = 0.701;
-  eps = 1e-5;
+  eps = model->opt.ccd_tolerance;
   EXPECT_THAT(mj_geomDistance(model, data, 3, 1, distmax, fromto),
               DoubleNear(0.7, eps));
-  eps = 1e-3;
   EXPECT_THAT(fromto, Pointwise(DoubleNear(eps),
-                                std::vector<mjtNum>{0, 0, .1, 0, 0, .8}));
+                                std::vector<mjtNum>{0, 0, .8, 0, 0, .1}));
 
   // mesh-sphere (far distmax)
   distmax = 1.0;
-  eps = 1e-3;
   EXPECT_THAT(mj_geomDistance(model, data, 3, 1, distmax, fromto),
               DoubleNear(0.7, eps));
-  eps = 2e-2;
   EXPECT_THAT(fromto, Pointwise(DoubleNear(eps),
-                                std::vector<mjtNum>{0, 0, .1, 0, 0, .8}));
+                                std::vector<mjtNum>{0, 0, .8, 0, 0, .1}));
 
   mj_deleteData(data);
   mj_deleteModel(model);

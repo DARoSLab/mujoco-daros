@@ -772,23 +772,11 @@ has any effect. The settings here are global and apply to the entire model.
    models compiled with this flag, it is important to remember that collision geoms are often placed in a
    :ref:`group<body-geom-group>` which is invisible by default.
 
-.. _compiler-convexhull:
-
-:at:`convexhull`: :at-val:`[false, true], "true"`
-   If this attribute is "true", the compiler will automatically generate a convex hull for every mesh that is used in at
-   least one non-visual geom (in the sense of the discardvisual attribute above). This is done to speed up collision
-   detection; recall :ref:`Collision` section in the Computation chapter. Even if the mesh is already convex, the hull
-   contains edge information that is not present in the mesh file, so it needs to be constructed. The only reason to
-   disable this feature is to speed up re-loading of a model with large meshes during model editing (since the convex
-   hull computation is the slowest operation performed by the compiler). However once model design is finished, this
-   feature should be enabled, because the availability of convex hulls substantially speeds up collision detection with
-   large meshes.
-
 .. _compiler-usethread:
 
 :at:`usethread`: :at-val:`[false, true], "true"`
    If this attribute is "true", the model compiler will run in multi-threaded mode. Currently multi-threading is used
-   for computing the length ranges of actuators and for loading meshes.
+   for computing the length ranges of actuators and for parallel loading of meshes.
 
 .. _compiler-fusestatic:
 
@@ -814,12 +802,6 @@ has any effect. The settings here are global and apply to the entire model.
    particular, a number of publicly available URDF models have seemingly arbitrary inertias which are too large compared
    to the mass. This results in equivalent inertia boxes which extend far beyond the geometric boundaries of the model.
    Note that the built-in OpenGL visualizer can render equivalent inertia boxes.
-
-.. _compiler-exactmeshinertia:
-
-:at:`exactmeshinertia`: :at-val:`[false, true], "false"`
-   If this attribute is set to false, computes mesh inertia with the legacy algorithm, which is exact only for convex
-   meshes. If set to true, it is exact for any closed mesh geometry.
 
 .. _compiler-alignfree:
 
@@ -1248,6 +1230,21 @@ The full list of processing steps applied by the compiler to each mesh is as fol
 :at:`scale`: :at-val:`real(3), "1 1 1"`
    This attribute specifies the scaling that will be applied to the vertex data along each coordinate axis. Negative
    values are allowed, resulting in flipping the mesh along the corresponding axis.
+
+.. _asset-mesh-inertia:
+
+:at:`inertia`: :at-val:`[convex, exact, legacy], "legacy"`
+   This attribute controls how the mesh is used when mass and inertia are
+   :ref:`inferred from geometry<compiler-inertiafromgeom>`. The current default value :at-val:`legacy` will be changed
+   to :at-val:`convex` in a future release.
+
+   :at-val:`convex`: Use the mesh's convex hull to compute volume and inertia.
+
+   :at-val:`exact`: Use an exact algorithm to compute volume and inertia. This algorithm requires a well-oriented,
+   watertight mesh and will error otherwise.
+
+   :at-val:`legacy`: Use the legacy algorithm, which is similar to :at-val:`convex`, but leads to volume overcounting
+   for non-convex meshes.
 
 .. _asset-mesh-smoothnormal:
 
@@ -1698,9 +1695,9 @@ properties are grouped together.
    loaded explicitly via the :ref:`texture <asset-texture>` element and then referenced here. The texture referenced
    here is used for specifying the RGB values. For advanced rendering (e.g., Physics-Based Rendering), more texture
    types need to be specified (e.g., roughness, metallic).  In this case, this texture attribute should be omitted, and
-   the texture types should be specified explicitly via the specific role child elements, e.g.,
-   :ref:`texture <material-orm>`.  Note however that the built-in renderer does not support PBR properties, so these
-   advanced rendering features are only available when using an external renderer.
+   the texture types should be specified using :ref:`layer <material-layer>` child elements. Note however that the
+   built-in renderer does not support PBR properties, so these advanced rendering features are only available when using
+   an external renderer.
 
 .. _asset-material-texrepeat:
 
@@ -1772,116 +1769,59 @@ properties are grouped together.
    model element which defines its own local rgba attribute, the local definition has precedence. Note that this "local"
    definition could in fact come from a defaults class. The remaining material properties always apply.
 
-.. _material-rgb:
+.. _material-layer:
 
-:el-prefix:`material/` |-| **rgb** (?)
-''''''''''''''''''''''''''''''''''''''
+:el-prefix:`material/` |-| **layer** (?)
+''''''''''''''''''''''''''''''''''''''''
 
-This element references a texture asset used to specify base color / albedo values.
+If multiple textures are needed to specify the appearance of a material, the :ref:`texture <asset-material-texture>`
+attribute cannot be used, and :el:`layer` child elements must be used instead. Specifying both the :at:`texture`
+attribute and :el:`layer` child elements is an error.
 
-.. _material-rgb-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly 3 channels.
-
-.. _material-normal:
-
-:el-prefix:`material/` |-| **normal** (?)
-'''''''''''''''''''''''''''''''''''''''''
-
-This element references a texture asset used to specify the bump map (surface normals).
-
-.. _material-normal-texture:
+.. _material-layer-texture:
 
 :at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly 3 channels.
+   Name of the texture, like the :ref:`texture <asset-material-texture>` attribute.
 
-.. _material-occlusion:
+.. _material-layer-role:
 
-:el-prefix:`material/` |-| **occlusion** (?)
-''''''''''''''''''''''''''''''''''''''''''''
+:at:`role`: :at-val:`string, required`
+   Role of the texture. The valid values, expected number of channels, and the role semantics are:
 
-This element references a texture asset used to specify ambient occlusion.
+   .. list-table::
+      :widths: 1 1 8
+      :header-rows: 1
 
-.. _material-occlusion-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly one channel.
-
-.. _material-roughness:
-
-:el-prefix:`material/` |-| **roughness** (?)
-''''''''''''''''''''''''''''''''''''''''''''
-
-This element references a texture asset used to specify the roughness map.
-
-.. _material-roughness-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly one channel.
-
-.. _material-metallic:
-
-:el-prefix:`material/` |-| **metallic** (?)
-'''''''''''''''''''''''''''''''''''''''''''
-
-This element references a texture asset used to specify the metallic map.
-
-.. _material-metallic-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly one channel.
-
-.. _material-opacity:
-
-:el-prefix:`material/` |-| **opacity** (?)
-''''''''''''''''''''''''''''''''''''''''''
-
-This element references a texture asset used to specify the opacity map (alpha channel, transparency).
-
-.. _material-opacity-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly one channel.
-
-.. _material-emissive:
-
-:el-prefix:`material/` |-| **emissive** (?)
-'''''''''''''''''''''''''''''''''''''''''''
-
-This element references a texture asset used to specify light emission.
-
-.. _material-emissive-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly 4 channels.
-
-.. _material-orm:
-
-:el-prefix:`material/` |-| **orm** (?)
-''''''''''''''''''''''''''''''''''''''
-
-This element references a texture asset used to specify a packed ORM map, where occlusion, roughness, and metallic
-are joined into the corresponding RGB values of a single texture.
-
-.. _material-orm-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly 3 channels.
-
-.. _material-rgba:
-
-:el-prefix:`material/` |-| **rgba** (?)
-'''''''''''''''''''''''''''''''''''''''
-
-This element references a texture asset used to specify a packed map where albedo and opacity are joined into the same
-4-channel texture.
-
-.. _material-rgba-texture:
-
-:at:`texture`: :at-val:`string, required`
-   Name of the texture, expected to have exactly 4 channels.
-
+      * - value
+        - channels
+        - description
+      * - :at:`rgb`
+        - 3
+        - base color / albedo [red, green, blue]
+      * - :at:`normal`
+        - 3
+        - bump map (surface normals)
+      * - :at:`occlusion`
+        - 1
+        - ambient occlusion
+      * - :at:`roughness`
+        - 1
+        - roughness
+      * - :at:`metallic`
+        - 1
+        - metallicity
+      * - :at:`opacity`
+        - 1
+        - opacity (alpha channel)
+      * - :at:`emissive`
+        - 4
+        - RGB light emmision intensity, exposure weight in 4th channel
+      * - :at:`orm`
+        - 3
+        - packed 3 channel [occlusion, roughness, metallic]
+      * - :at:`rgba`
+        - 4
+        - packed 4 channel [red, green, blue, alpha]
 
 .. _asset-model:
 
@@ -3041,20 +2981,6 @@ coordinates results in compiler error. See :ref:`CComposite` in the modeling gui
    define the tendons). The "main" tendons are parallel to the axes of the grid. In addition one can create diagonal
    "shear" tendons, using the :el:`tendon` sub-element. This type is suitable for simulating strings as well as cloth.
 
-   The **rope** type creates a 1D grid of bodies, each having a geom with user-defined type (sphere, capsule or
-   ellipsoid) and 2 hinge joints with axes orthogonal to the grid, creating a universal joint with the previous body.
-   This corresponds to a kinematic chain which can bend but cannot stretch or twist. In addition, one can specify
-   stretch and twist joints (slide and hinge respectively) with the :el:`joint` sub-element. When specified, these extra
-   joints are equality-constrained, but the constraint is soft by default so that some stretch and twist are possible.
-   The rope can extend in one or both directions from the parent body. To specify the origin of the rope, the parent
-   body *must* be named so that it fits the automatic naming convention. For example, to make the parent be the first
-   body in the chain, and assuming we have prefix="C", the parent body should be named "CB0". When the parent is not at
-   the end, the rope consists of two kinematic chains starting at the parent and extending in opposite directions.
-
-   The **loop** type is the same as the rope type except the elements are arranged in a circle, and the first and last
-   elements are equality-constrained to remain connected (using the "connect" constraint type). The softness of this
-   equality constraint is adjusted with the attributes solrefsmooth and solimpsmooth.
-
    The **cable** type creates a 1D chain of bodies connected with ball joints, each having a geom with user-defined type
    (cylinder, capsule or box). The geometry can either be defined with an array of 3D vertex coordinates :at:`vertex`
    or with prescribed functions with the option :at:`curve`. Currently, only linear and trigonometric functions are
@@ -3549,7 +3475,7 @@ saving the XML:
 
 .. _body-flexcomp-type:
 
-:at:`type`: :at-val:`[grid, box, cylinder, ellipsoid, mesh, gmsh, direct], "grid"`
+:at:`type`: :at-val:`[grid, box, cylinder, ellipsoid, disc, circle, mesh, gmsh, direct], "grid"`
    This attribute determines the type of :el:`flexcomp` object. The remaining attributes and sub-elements are then
    interpreted according to the type. Default settings are also adjusted depending on the type. Different types
    correspond to different methods for specifying the flexcomp points and the stretchable elements that connect them.
@@ -3572,6 +3498,13 @@ saving the XML:
    **cylinder** is the same as **box**, except the points are projected on the surface of a cylinder.
 
    **ellipsoid** is the same as **box**, except the points are projected on the surface of an ellipsoid.
+
+   **disc** is the same as **box**, except the points are projected on the surface of a disc. It is only compatible
+   with :at:`dim=2`.
+
+   **circle** is the same as **grid**, except the points are sampled along a circle so that the first and last points
+   are the same. The radius of the circle is computed such that each segment has the requested spacing. It is only
+   compatible with :at:`dim=1`.
 
    **mesh** loads the flexcomp points and elements (i.e. triangles) from a mesh file, in the same file formats as mesh
    assets. A mesh asset is not actually added to the model. Instead the vertex and face data from the mesh file are used
@@ -3626,9 +3559,10 @@ saving the XML:
 
 :at:`texcoord`: :at-val:`real(2*npoint), optional`
    Texture coordinates of each point, passed through to the automatically-generated flex. Note that flexcomp does not
-   generate texture coordinates automatically, except for 2D grids. For all other types, the user can specify explicit
-   texture coordinates here, even if the points themselves were generated automatically. This requires understanding of
-   the layout of the automatically-generated points and how they correspond to the texture referenced by the material.
+   generate texture coordinates automatically, except for 2D grids, box, cylinder and ellipsoid. For all other types,
+   the user can specify explicit texture coordinates here, even if the points themselves were generated automatically.
+   This requires understanding of the layout of the automatically-generated points and how they correspond to the
+   texture referenced by the material.
 
 .. _body-flexcomp-mass:
 
@@ -3861,19 +3795,19 @@ all attachments will appear in the saved XML file.
 
 .. _body-attach-model:
 
-:at:`model`: :at-val:`string, optional`
+:at:`model`: :at-val:`string, required`
    The sub-model from which to attach a subtree.
 
 .. _body-attach-body:
 
-:at:`body`: :at-val:`string, optional`
+:at:`body`: :at-val:`string, required`
    Name of the body in the sub-model to attach here. The body and its subtree will be attached.
 
 .. _body-attach-prefix:
 
-:at:`prefix`: :at-val:`string, optional`
-   Prefix to prepend to names of elements in the sub-model. If empty, the names are unchanged. This attribute is
-   required to prevent name collisions with the parent or when attaching the same sub-tree multiple times.
+:at:`prefix`: :at-val:`string, required`
+   Prefix to prepend to names of elements in the sub-model. This attribute is required to prevent name collisions with
+   the parent or when attaching the same sub-tree multiple times.
 
 
 .. _body-frame:
@@ -6243,13 +6177,12 @@ excluded; this is because sensor calculations are independent of the visualizer.
 :el-prefix:`sensor/` |-| **camprojection** (*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This element creates a camprojection sensor, which returns the location of a target site, projected onto a camera image
-in pixel coordinates. The origin of this system is located at the top-left corner of the first pixel, so a target
-which projects exactly onto the corner of the image, will have value (0, 0). Values are not clipped, so targets which
-fall outside the camera image will take values above or below the pixel limits. Moreover, points behind the camera
-are also projected onto the image, so it is up to the user to filter out such points, if desired. This can be done using
-a `framepos<sensor-framepos>` sensor with the camera as reference frame, then a negative/positive value in the
-z-coordinate indicates (respectively) a location in the front/back of the camera.
+This element creates a camera projection sensor: the location of a target site, projected onto a camera image in pixel
+coordinates. The pixel origin (0, 0) is located at the top-left corner. Values are not clipped, so targets which fall
+outside the camera image will take values above or below the pixel range limits. Moreover, points behind the camera are
+also projected onto the image, so it is up to the user to filter out such points, if desired. This can be done using a
+:ref:`framepos<sensor-framepos>` sensor with the camera as a reference frame: a negative/positive value in the
+z-coordinate indicates a location in front of/behind the camera plane, respectively.
 
 .. _sensor-camprojection-site:
 
@@ -6459,7 +6392,7 @@ contributed by all actuators to a single scalar joint (hinge or slider). If the 
 :ref:`actuatorgravcomp<body-joint-actuatorgravcomp>` attribute is "true", this sensor will also measure contributions by
 gravity compensation forces (which are added directly to the joint and would *not* register in the
 :ref:`actuatorfrc<sensor-actuatorfrc>`) sensor. This type of sensor is important when multiple actuators act on a single
-joint or when a single actuator act on multiple joints. See :ref:`CForceRange` for details.
+joint or when a single actuator acts on multiple joints. See :ref:`CForceRange` for details.
 
 
 .. _sensor-jointactuatorfrc-name:
@@ -8015,6 +7948,8 @@ if omitted.
 .. _default-mesh-scale:
 
 .. _default-mesh-maxhullvert:
+
+.. _default-mesh-inertia:
 
 :el-prefix:`default/` |-| **mesh** (?)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

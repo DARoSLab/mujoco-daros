@@ -24,6 +24,7 @@ from mujoco.mjx._src import support
 from mujoco.mjx._src.types import CamLightType
 from mujoco.mjx._src.types import Data
 from mujoco.mjx._src.types import DisableBit
+from mujoco.mjx._src.types import EqType
 from mujoco.mjx._src.types import JointType
 from mujoco.mjx._src.types import Model
 from mujoco.mjx._src.types import TrnType
@@ -291,7 +292,7 @@ def crb(m: Model, d: Data) -> Data:
   crb_cdof = jax.vmap(math.inert_mul)(crb_dof, d.cdof)
   qm = support.make_m(m, crb_cdof, d.cdof, m.dof_armature)
   d = d.replace(qM=qm)
-  if support.is_sparse(m):
+  if support.is_sparse(m) and d._qM_sparse.size > 0:  # pylint: disable=protected-access
     d = d.replace(_qM_sparse=qm)
 
   return d
@@ -333,7 +334,7 @@ def factor_m(m: Model, d: Data) -> Data:
     pivots = []
     out = []
 
-    for (b, e, madr_d, madr_ij) in updates:
+    for b, e, madr_d, madr_ij in updates:
       width = e - b
       rows.append(np.arange(madr_ij, madr_ij + width))
       madr_ijs.append(np.full((width,), madr_ij))
@@ -353,7 +354,10 @@ def factor_m(m: Model, d: Data) -> Data:
   qld = (qld / qld[jp.array(madr_ds)]).at[m.dof_Madr].set(qld_diag)
 
   d = d.replace(qLD=qld, qLDiagInv=1 / qld_diag)
-  d = d.replace(_qLD_sparse=d.qLD, _qLDiagInv_sparse=d.qLDiagInv)
+  if d._qLD_sparse.size > 0:  # pylint: disable=protected-access
+    d = d.replace(_qLD_sparse=d.qLD)
+  if d._qLDiagInv_sparse.size > 0:  # pylint: disable=protected-access
+    d = d.replace(_qLDiagInv_sparse=d.qLDiagInv)
 
   return d
 
@@ -507,7 +511,6 @@ def subtree_vel(m: Model, d: Data) -> Data:
       angmom_child, mom_parent_child = carry
       return angmom + mom + angmom_child + mom_parent_child, mom_parent
 
-
   subtree_angmom, _ = scan.body_tree(
       m,
       _subtree_angmom,
@@ -531,6 +534,7 @@ def subtree_vel(m: Model, d: Data) -> Data:
 
 def rne(m: Model, d: Data) -> Data:
   """Computes inverse dynamics using the recursive Newton-Euler algorithm."""
+
   # forward scan over tree: accumulate link center of mass acceleration
   def cacc_fn(cacc, cdof_dot, qvel):
     if cacc is None:
@@ -632,6 +636,10 @@ def rne_postconstraint(m: Model, d: Data) -> Data:
     )
 
   # TODO(taylorhowell): connect and weld constraints
+  if np.any(m.eq_type == EqType.CONNECT):
+    raise NotImplementedError('Connect constraints are not implemented.')
+  if np.any(m.eq_type == EqType.WELD):
+    raise NotImplementedError('Weld constraints are not implemented.')
 
   # forward pass over bodies: compute cacc, cfrc_int
   def _forward(carry, cfrc_ext, cinert, cvel, body_dofadr, body_dofnum):

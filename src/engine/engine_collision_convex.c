@@ -14,6 +14,7 @@
 
 #include "engine/engine_collision_convex.h"
 
+#include <float.h>
 #include <stddef.h>
 
 #include <ccd/ccd.h>
@@ -29,7 +30,7 @@
 #include "engine/engine_util_misc.h"
 #include "engine/engine_util_spatial.h"
 
-// call LibCCD or GJK to recover penetration info
+// call libccd or nativeccd to recover penetration info
 static int mjc_penetration(const mjModel* m, mjCCDObj* obj1, mjCCDObj* obj2,
                            const ccd_t* ccd, ccd_real_t* depth, ccd_vec3_t* dir, ccd_vec3_t* pos) {
   if (mjENABLED(mjENBL_NATIVECCD)) {
@@ -39,8 +40,8 @@ static int mjc_penetration(const mjModel* m, mjCCDObj* obj1, mjCCDObj* obj2,
     // set config
     config.max_iterations = ccd->max_iterations,
     config.tolerance = ccd->mpr_tolerance,
-    config.contacts = 1;
-    config.distances = 0;  // no geom distances needed
+    config.max_contacts = 1;
+    config.dist_cutoff = 0;  // no geom distances needed
 
     mjtNum dist = mjc_ccd(&config, &status, obj1, obj2);
     if (dist < 0) {
@@ -65,6 +66,7 @@ static int mjc_penetration(const mjModel* m, mjCCDObj* obj1, mjCCDObj* obj2,
   // fallback to MPR
   return ccdMPRPenetration(obj1, obj2, ccd, depth, dir, pos);
 }
+
 
 
 // ccd center function
@@ -140,6 +142,16 @@ static inline void localToGlobal(mjtNum res[3], const mjtNum mat[9], const mjtNu
 
 
 
+// point support function
+void mjc_pointSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[3]) {
+  const mjtNum* pos = obj->data->geom_xpos + 3*obj->geom;
+  res[0] = pos[0];
+  res[1] = pos[1];
+  res[2] = pos[2];
+}
+
+
+
 // sphere support function
 static void mjc_sphereSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[3]) {
   const mjModel* m = obj->model;
@@ -152,6 +164,31 @@ static void mjc_sphereSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[3])
   res[0] = radius*dir[0] + pos[0];
   res[1] = radius*dir[1] + pos[1];
   res[2] = radius*dir[2] + pos[2];
+}
+
+
+
+// line support function (capsule)
+void mjc_lineSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[3]) {
+  const mjModel* m = obj->model;
+  const mjData* d = obj->data;
+
+  // capsule data
+  int i = 3*obj->geom;
+  const mjtNum* mat = d->geom_xmat + 3*i;
+  const mjtNum* pos = d->geom_xpos + i;
+  mjtNum length = m->geom_size[i+1];
+
+  // rotate dir to geom local frame
+  mjtNum local_dir[3], tmp[3];
+  mulMatTVec3(local_dir, mat, dir);
+
+  tmp[0] = 0;
+  tmp[1] = 0;
+  tmp[2] = (local_dir[2] >= 0 ? length : -length);
+
+  // transform result to global frame
+  localToGlobal(res, mat, tmp, pos);
 }
 
 
@@ -178,7 +215,7 @@ static void mjc_capsuleSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[3]
   tmp[2] = local_dir[2] * radius;
 
   // add cylinder contribution
-  tmp[2] += mju_sign(local_dir[2]) * length;
+  tmp[2] += (local_dir[2] >= 0 ? length : -length);
 
   // transform result to global frame
   localToGlobal(res, mat, tmp, pos);
@@ -274,12 +311,19 @@ static void mjc_boxSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[3]) {
   mjtNum local_dir[3], tmp[3];
   mulMatTVec3(local_dir, mat, dir);
 
-  tmp[0] = mju_sign(local_dir[0]) * size[0];
-  tmp[1] = mju_sign(local_dir[1]) * size[1];
-  tmp[2] = mju_sign(local_dir[2]) * size[2];
+  tmp[0] = (local_dir[0] >= 0 ? 1 : -1) * size[0];
+  tmp[1] = (local_dir[1] >= 0 ? 1 : -1) * size[1];
+  tmp[2] = (local_dir[2] >= 0 ? 1 : -1) * size[2];
 
   // transform result to global frame
   localToGlobal(res, mat, tmp, pos);
+}
+
+
+
+// dot product between mjtNum and float
+static inline mjtNum dot3f(const mjtNum a[3], const float b[3]) {
+  return a[0]*(mjtNum)b[0] + a[1]*(mjtNum)b[1] + a[2]*(mjtNum)b[2];
 }
 
 
@@ -299,34 +343,32 @@ static void mjc_meshSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[3]) {
   mjtNum local_dir[3];
   mulMatTVec3(local_dir, mat, dir);
 
-  mjtNum tmp = -1E+10;
-  int ibest = -1;
+  mjtNum max = -FLT_MAX;
+  int imax = 0;
+
+  // used cached results from previous search
   if (obj->meshindex >= 0) {
-    ibest = obj->meshindex;
-    tmp = local_dir[0] * (mjtNum)verts[3*ibest + 0] +
-          local_dir[1] * (mjtNum)verts[3*ibest + 1] +
-          local_dir[2] * (mjtNum)verts[3*ibest + 2];
+    imax = obj->meshindex;
+    max = dot3f(local_dir, verts + 3*imax);
   }
 
-  // search all vertices, find best
+  // search all vertices, find maximum dot product
   for (int i=0; i < nverts; i++) {
-    mjtNum vdot = local_dir[0] * (mjtNum)verts[3*i + 0] +
-                  local_dir[1] * (mjtNum)verts[3*i + 1] +
-                  local_dir[2] * (mjtNum)verts[3*i + 2];
+    mjtNum vdot = dot3f(local_dir, verts + 3*i);
 
-    // update best
-    if (vdot > tmp) {
-      tmp = vdot;
-      ibest = i;
+    // update max
+    if (vdot > max) {
+      max = vdot;
+      imax = i;
     }
   }
 
-  // record best vertex index
-  obj->meshindex = ibest;
+  // record vertex index of maximum
+  obj->meshindex = imax;
 
-  local_dir[0] = (mjtNum)verts[3*ibest + 0];
-  local_dir[1] = (mjtNum)verts[3*ibest + 1];
-  local_dir[2] = (mjtNum)verts[3*ibest + 2];
+  local_dir[0] = (mjtNum)verts[3*imax + 0];
+  local_dir[1] = (mjtNum)verts[3*imax + 1];
+  local_dir[2] = (mjtNum)verts[3*imax + 2];
 
   // transform result to global frame
   localToGlobal(res, mat, local_dir, pos);
@@ -354,38 +396,29 @@ static void mjc_hillclimbSupport(mjtNum res[3], mjCCDObj* obj, const mjtNum dir[
   mjtNum local_dir[3];
   mulMatTVec3(local_dir, mat, dir);
 
-  mjtNum tmp = -1E+10;
-  int ibest= -1, prev = -1;
-  // hill-climb until no change
+  // hillclimb until no change
+  mjtNum max = -FLT_MAX;
+  int prev = -1, imax = obj->meshindex < 0 ? 0 : obj->meshindex;
   do {
-    prev = ibest;
-    for (int i = vert_edgeadr[ibest]; edge_localid[i] >= 0; i++) {
+    prev = imax;
+    for (int i = vert_edgeadr[imax]; edge_localid[i] >= 0; i++) {
       int idx = 3*vert_globalid[edge_localid[i]];
-      mjtNum vdot = local_dir[0] * (mjtNum)verts[idx + 0] +
-                    local_dir[1] * (mjtNum)verts[idx + 1] +
-                    local_dir[2] * (mjtNum)verts[idx + 2];
-      if (vdot > tmp) {
-        tmp = vdot;
-        ibest = edge_localid[i];  // update best
+      mjtNum vdot = dot3f(local_dir, verts + idx);
+      if (vdot > max) {
+        max = vdot;
+        imax = edge_localid[i];  // update maximum vertex index
       }
     }
-  } while (ibest != prev);
+  } while (imax != prev);
 
-  // record best vertex index (local id)
-  obj->meshindex = ibest;
+  // record vertex index of maximum (local id)
+  obj->meshindex = imax;
 
-  // map best index to globalid
-  ibest = vert_globalid[ibest];
-
-  // sanity check, SHOULD NOT OCCUR
-  if (ibest < 0) {
-    mju_warning("mesh_support could not find support vertex");
-    mju_zero3(res);
-  } else {
-    local_dir[0] = (mjtNum)verts[3*ibest + 0];
-    local_dir[1] = (mjtNum)verts[3*ibest + 1];
-    local_dir[2] = (mjtNum)verts[3*ibest + 2];
-  }
+  // get resulting support vertex
+  imax = 3*vert_globalid[imax];
+  local_dir[0] = (mjtNum)verts[imax + 0];
+  local_dir[1] = (mjtNum)verts[imax + 1];
+  local_dir[2] = (mjtNum)verts[imax + 2];
 
   // transform result to global frame
   localToGlobal(res, mat, local_dir, pos);
@@ -747,12 +780,46 @@ static void mjc_initCCD(ccd_t* ccd, const mjModel* m) {
 
 
 // find single convex-convex collision
-static int mjc_CCDIteration(mjCCDObj* obj1, mjCCDObj* obj2, const ccd_t* ccd,
-                            const mjModel* m, const mjData* d,
+static int mjc_CCDIteration(const mjModel* m, const mjData* d, mjCCDObj* obj1, mjCCDObj* obj2,
                             mjContact* con, mjtNum margin) {
+  if (mjENABLED(mjENBL_NATIVECCD)) {
+    mjCCDConfig config;
+    mjCCDStatus status;
+
+    // set config
+    config.max_iterations = m->opt.ccd_iterations;
+    config.tolerance = m->opt.ccd_tolerance;
+    config.max_contacts = 1;
+    config.dist_cutoff = 0;  // no geom distances needed
+
+    mjtNum dist = mjc_ccd(&config, &status, obj1, obj2);
+    if (dist < 0) {
+      con->dist = margin + dist;
+      mju_sub3(con->frame, status.x1, status.x2);
+      mju_normalize3(con->frame);
+      con->pos[0] = 0.5 * (status.x1[0] + status.x2[0]);
+      con->pos[1] = 0.5 * (status.x1[1] + status.x2[1]);
+      con->pos[2] = 0.5 * (status.x1[2] + status.x2[2]);
+      mju_zero3(con->frame+3);
+      return 1;
+    }
+    return 0;
+  }
+
+  // init libccd structure
+  ccd_t ccd;
+  mjc_initCCD(&ccd, m);
+  ccd.first_dir = ccdFirstDirDefault;
+  ccd.center1 = mjccd_center;
+  ccd.center2 = mjccd_center;
+  ccd.support1 = mjccd_support;
+  ccd.support2 = mjccd_support;
+
   ccd_vec3_t dir, pos;
   ccd_real_t depth;
-  if (mjc_penetration(m, obj1, obj2, ccd, &depth, &dir, &pos) == 0) {
+
+  // call MPR from libccd
+  if (ccdMPRPenetration(obj1, obj2, &ccd, &depth, &dir, &pos) == 0) {
     // contact is found but normal is undefined
     if (ccdVec3Eq(&dir, ccd_vec3_origin)) {
       return 0;
@@ -771,11 +838,7 @@ static int mjc_CCDIteration(mjCCDObj* obj1, mjCCDObj* obj2, const ccd_t* ccd,
 
     return 1;
   }
-
-  // no contact found
-  else {
-    return 0;
-  }
+  return 0;
 }
 
 
@@ -822,17 +885,8 @@ int mjc_Convex(const mjModel* m, const mjData* d,
   mjc_initCCDObj(&obj1, m, d, g1, margin);
   mjc_initCCDObj(&obj2, m, d, g2, margin);
 
-  // init libccd structure
-  ccd_t ccd;
-  mjc_initCCD(&ccd, m);
-  ccd.first_dir = ccdFirstDirDefault;
-  ccd.center1 = mjccd_center;
-  ccd.center2 = mjccd_center;
-  ccd.support1 = mjccd_support;
-  ccd.support2 = mjccd_support;
-
   // find initial contact
-  int ncon = mjc_CCDIteration(&obj1, &obj2, &ccd, m, d, con, margin);
+  int ncon = mjc_CCDIteration(m, d, &obj1, &obj2, con, margin);
 
   // look for additional contacts
   if (ncon && mjENABLED(mjENBL_MULTICCD)  // TODO(tassa) leave as bitflag or make geom attribute (?)
@@ -881,7 +935,7 @@ int mjc_Convex(const mjModel* m, const mjData* d,
         mju_rotateFrame(con[0].pos, invrot, d->geom_xmat+9*g2, d->geom_xpos+3*g2);
 
         // search for new contact
-        int new_contact = mjc_CCDIteration(&obj1, &obj2, &ccd, m, d, con+ncon, margin);
+        int new_contact = mjc_CCDIteration(m, d, &obj1, &obj2, con+ncon, margin);
 
         // check new contact
         if (new_contact && mjc_isDistinctContact(con, ncon + 1, tolerance)) {
@@ -1528,19 +1582,8 @@ int mjc_ConvexElem(const mjModel* m, const mjData* d, mjContact* con,
   mjc_setCCDObjFlex(&obj1, f1, e1, v1);
   mjc_setCCDObjFlex(&obj2, f2, e2, -1);
 
-  // init libccd structure
-  ccd_t ccd;
-  mjc_initCCD(&ccd, m);
-  ccd.first_dir = ccdFirstDirDefault;
-  ccd.center1 = mjccd_center;
-  ccd.center2 = mjccd_center;
-  ccd.support1 = mjccd_support;
-  ccd.support2 = mjccd_support;
-
   // find contacts
-  int ncon = mjc_CCDIteration(&obj1, &obj2, &ccd, m, d, con, margin);
-
-  return ncon;
+  return mjc_CCDIteration(m, d, &obj1, &obj2, con, margin);
 }
 
 

@@ -26,7 +26,6 @@
 #include <absl/strings/str_format.h>
 #include <mujoco/mjmodel.h>
 #include <mujoco/mujoco.h>
-#include "src/cc/array_safety.h"
 #include "test/fixture.h"
 
 namespace mujoco {
@@ -42,10 +41,6 @@ using ::testing::Pointwise;
 static std::vector<mjtNum> GetRow(const mjtNum* array, int ncolumn, int row) {
   return std::vector<mjtNum>(array + ncolumn * row,
                              array + ncolumn * (row + 1));
-}
-
-std::vector<mjtNum> AsVector(const mjtNum* array, int n) {
-  return std::vector<mjtNum>(array, array + n);
 }
 
 // ----------------------------- test mjCModel  --------------------------------
@@ -119,6 +114,30 @@ TEST_F(UserCModelTest, SameFrame) {
 
   mj_deleteData(data);
   mj_deleteModel(model);
+}
+
+TEST_F(UserCModelTest, ActuatorSparsity) {
+  static constexpr char xml[] = R"(
+  <mujoco>
+    <worldbody>
+      <body>
+        <geom size="1"/>
+        <joint name="a"/>
+        <body>
+          <geom size="1"/>
+          <joint name="b"/>
+        </body>
+      </body>
+    </worldbody>
+    <actuator>
+      <motor joint="a"/>
+      <motor joint="b"/>
+    </actuator>
+  </mujoco>
+  )";
+  mjModel* m = LoadModelFromString(xml);
+  ASSERT_EQ(m->nJmom, 2);
+  mj_deleteModel(m);
 }
 
 
@@ -480,8 +499,8 @@ TEST_F(LengthRangeTest, LengthRangeThreading) {
               DoubleNear(std::sqrt(5.0), 1e-3));
 
   // recompile without threads
-  ASSERT_EQ(spec->usethread, 1);
-  spec->usethread = 0;
+  ASSERT_EQ(spec->compiler.usethread, 1);
+  spec->compiler.usethread = 0;
   mjModel* model2 = mj_compile(spec, 0);
   EXPECT_THAT(model2, NotNull()) << error;
 

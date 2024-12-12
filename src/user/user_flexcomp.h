@@ -31,6 +31,7 @@ typedef enum _mjtFcompType {
   mjFCOMPTYPE_ELLIPSOID,
   mjFCOMPTYPE_SQUARE,
   mjFCOMPTYPE_DISC,
+  mjFCOMPTYPE_CIRCLE,
   mjFCOMPTYPE_MESH,
   mjFCOMPTYPE_GMSH,
   mjFCOMPTYPE_DIRECT,
@@ -42,7 +43,7 @@ typedef enum _mjtFcompType {
 class mjCFlexcomp {
  public:
   mjCFlexcomp(void);
-  bool Make(mjSpec* spec, mjsBody* body, char* error, int error_sz);
+  bool Make(mjsBody* body, char* error, int error_sz);
 
   bool MakeGrid(char* error, int error_sz);
   bool MakeBox(char* error, int error_sz);

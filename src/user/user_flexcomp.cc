@@ -98,8 +98,9 @@ mjCFlexcomp::mjCFlexcomp(void) {
 
 
 // make flexcomp object
-bool mjCFlexcomp::Make(mjSpec* spec, mjsBody* body, char* error, int error_sz) {
-  mjCModel* model = (mjCModel*)spec->element;
+bool mjCFlexcomp::Make(mjsBody* body, char* error, int error_sz) {
+  mjCModel* model = static_cast<mjCBody*>(body->element)->model;
+  mjsCompiler* compiler = static_cast<mjCBody*>(body->element)->compiler;
   mjsFlex* dflex = def.spec.flex;
 
   bool radial = (type == mjFCOMPTYPE_BOX ||
@@ -147,7 +148,7 @@ bool mjCFlexcomp::Make(mjSpec* spec, mjsBody* body, char* error, int error_sz) {
   }
 
   // compute orientation
-  const char* alterr = mjs_resolveOrientation(quat, model->spec.degree, model->spec.eulerseq, &alt);
+  const char* alterr = mjs_resolveOrientation(quat, compiler->degree, compiler->eulerseq, &alt);
   if (alterr) {
     return comperr(error, alterr, error_sz);
   }
@@ -156,6 +157,7 @@ bool mjCFlexcomp::Make(mjSpec* spec, mjsBody* body, char* error, int error_sz) {
   bool res;
   switch (type) {
   case mjFCOMPTYPE_GRID:
+  case mjFCOMPTYPE_CIRCLE:
     res = MakeGrid(error, error_sz);
     break;
 
@@ -547,15 +549,32 @@ bool mjCFlexcomp::MakeGrid(char* error, int error_sz) {
   // 1D
   if (dim == 1) {
     for (int ix=0; ix < count[0]; ix++) {
-      // add point
-      point.push_back(spacing[0]*(ix - 0.5*(count[0]-1)));
-      point.push_back(0);
-      point.push_back(0);
+      if (type == mjFCOMPTYPE_CIRCLE) {
+        if (ix >= count[0]-1) {
+          continue;
+        }
 
-      // add element
-      if (ix < count[0]-1) {
+        // add point
+        double theta = 2*mjPI/(count[0]-1);
+        double radius = spacing[0]/std::sin(theta/2)/2;
+        point.push_back(radius*std::cos(theta*ix));
+        point.push_back(radius*std::sin(theta*ix));
+        point.push_back(0);
+
+        // add element
         element.push_back(ix);
-        element.push_back(ix+1);
+        element.push_back(ix == count[0]-2 ? 0 : ix+1);
+      } else {
+        // add point
+        point.push_back(spacing[0]*(ix - 0.5*(count[0]-1)));
+        point.push_back(0);
+        point.push_back(0);
+
+        // add element
+        if (ix < count[0]-1) {
+          element.push_back(ix);
+          element.push_back(ix+1);
+        }
       }
     }
   }
@@ -762,6 +781,7 @@ bool mjCFlexcomp::MakeSquare(char* error, int error_sz) {
 // make 3d box, ellipsoid or cylinder
 bool mjCFlexcomp::MakeBox(char* error, int error_sz) {
   double pos[3];
+  bool needtex = texcoord.empty() && !std::string(mjs_getString(def.spec.flex->material)).empty();
 
   // set 3D
   def.spec.flex->dim = 3;
@@ -770,6 +790,12 @@ bool mjCFlexcomp::MakeBox(char* error, int error_sz) {
   point.push_back(0);
   point.push_back(0);
   point.push_back(0);
+
+  // add texture coordinates, if not specified explicitly
+  if (needtex) {
+    texcoord.push_back(0);
+    texcoord.push_back(0);
+  }
 
   // iz=0/max
   for (int iz=0; iz < count[2]; iz+=count[2]-1) {
@@ -780,6 +806,12 @@ bool mjCFlexcomp::MakeBox(char* error, int error_sz) {
         point.push_back(pos[0]);
         point.push_back(pos[1]);
         point.push_back(pos[2]);
+
+        // add texture coordinates, if not specified explicitly
+        if (needtex) {
+          texcoord.push_back(ix/(float)std::max(count[0]-1, 1));
+          texcoord.push_back(iy/(float)std::max(count[1]-1, 1));
+        }
 
         // add elements
         if (ix < count[0]-1 && iy < count[1]-1) {
@@ -807,6 +839,12 @@ bool mjCFlexcomp::MakeBox(char* error, int error_sz) {
           point.push_back(pos[0]);
           point.push_back(pos[1]);
           point.push_back(pos[2]);
+
+          // add texture coordinates
+          if (needtex) {
+            texcoord.push_back(ix/(float)std::max(count[0]-1, 1));
+            texcoord.push_back(iz/(float)std::max(count[2]-1, 1));
+          }
         }
 
         // add elements
@@ -835,6 +873,12 @@ bool mjCFlexcomp::MakeBox(char* error, int error_sz) {
           point.push_back(pos[0]);
           point.push_back(pos[1]);
           point.push_back(pos[2]);
+
+          // add texture coordinates
+          if (needtex) {
+            texcoord.push_back(iy/(float)std::max(count[1]-1, 1));
+            texcoord.push_back(iz/(float)std::max(count[2]-1, 1));
+          }
         }
 
         // add elements

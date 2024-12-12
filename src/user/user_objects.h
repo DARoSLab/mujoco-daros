@@ -208,11 +208,15 @@ class mjCBase : public mjCBase_ {
   // Appends prefix and suffix to reference
   virtual void NameSpace(const mjCModel* m);
 
+  // Copy plugins instantiated in this object
+  virtual void CopyPlugin() {}
+
   // Copy assignment
   mjCBase& operator=(const mjCBase& other);
 
   mjCFrame* frame;                // pointer to frame transformation
-  mjCModel* model;                // pointer to model that created object
+  mjCModel* model;                // pointer to model that owns object
+  mjsCompiler* compiler;          // pointer to the compiler options
 
   virtual ~mjCBase() = default;   // destructor
 
@@ -232,8 +236,9 @@ class mjCBase : public mjCBase_ {
 
 class mjCBody_ : public mjCBase {
  protected:
+  mjCBody* parent;
+
   // variables computed by 'Compile' and 'AddXXX'
-  int parentid;                   // parent index in global array
   int weldid;                     // top index of body we are welded to
   int dofnum;                     // number of motion dofs for body
   int mocapid;                    // mocap id, -1: not mocap
@@ -340,6 +345,9 @@ class mjCBody : public mjCBody_, private mjsBody {
 
   mjsFrame* last_attached;  // last attached frame to this body
 
+  // set parent of this body
+  void SetParent(mjCBody* _body) { parent = _body; }
+
  private:
   mjCBody(const mjCBody& other, mjCModel* _model);  // copy constructor
   mjCBody& operator=(const mjCBody& other);         // copy assignment
@@ -359,6 +367,7 @@ class mjCBody : public mjCBody_, private mjsBody {
   void CopyFromSpec();                 // copy spec into attributes
   void PointToLocal(void);
   void NameSpace_(const mjCModel* m, bool propagate = true);
+  void CopyPlugin();
 
   // copy src list of elements into dst; set body, model and frame
   template <typename T>
@@ -401,7 +410,7 @@ class mjCFrame : public mjCFrame_, private mjsFrame {
 
   void CopyFromSpec(void);
   void PointToLocal(void);
-  void SetParent(mjCBody* _body);
+  void SetParent(mjCBody* _body) { body = _body; }
 
   mjCFrame& operator+=(const mjCBody& other);
 
@@ -452,6 +461,7 @@ class mjCJoint : public mjCJoint_, private mjsJoint {
   using mjCBase::info;
 
   void CopyFromSpec(void);
+  void SetParent(mjCBody* _body) { body = _body; }
 
   // used by mjXWriter and mjCModel
   const std::vector<double>& get_userdata() const { return userdata_; }
@@ -532,6 +542,7 @@ class mjCGeom : public mjCGeom_, private mjsGeom {
   void SetInertia(void);              // compute and set geom inertia
   bool IsVisual(void) const { return visual_; }
   void SetNotVisual(void) { visual_ = false; }
+  void SetParent(mjCBody* _body) { body = _body; }
   mjtGeom Type() const { return type; }
 
   // Compute all coefs modeling the interaction with the surrounding fluid.
@@ -556,6 +567,7 @@ class mjCGeom : public mjCGeom_, private mjsGeom {
   void CopyFromSpec(void);
   void PointToLocal(void);
   void NameSpace(const mjCModel* m);
+  void CopyPlugin();
 
   // inherited
   using mjCBase::info;
@@ -595,6 +607,7 @@ class mjCSite : public mjCSite_, private mjsSite {
 
   // site's body
   mjCBody* Body() const { return body; }
+  void SetParent(mjCBody* _body) { body = _body; }
 
   // use strings from mjCBase rather than mjStrings from mjsSite
   using mjCBase::name;
@@ -609,6 +622,7 @@ class mjCSite : public mjCSite_, private mjsSite {
   void Compile(void);                     // compiler
   void CopyFromSpec();                    // copy spec into attributes
   void PointToLocal(void);
+  void NameSpace(const mjCModel* m);
 };
 
 
@@ -645,6 +659,8 @@ class mjCCamera : public mjCCamera_, private mjsCamera {
   // used by mjXWriter and mjCModel
   const std::string& get_targetbody() const { return targetbody_; }
   const std::vector<double>& get_userdata() const { return userdata_; }
+
+  void SetParent(mjCBody* _body) { body = _body; }
 
  private:
   void Compile(void);                     // compiler
@@ -683,6 +699,8 @@ class mjCLight : public mjCLight_, private mjsLight {
 
   // used by mjXWriter and mjCModel
   const std::string& get_targetbody() const { return targetbody_; }
+
+  void SetParent(mjCBody* _body) { body = _body; }
 
  private:
   void Compile(void);                     // compiler
@@ -767,6 +785,8 @@ class mjCFlex: public mjCFlex_, private mjsFlex {
   void Compile(const mjVFS* vfs);         // compiler
   void CreateBVH(void);                   // create flex BVH
   void CreateShellPair(void);             // create shells and evpairs
+
+  std::vector<double> vert0_;             // vertex positions in [0, 1]^d in the bounding box
 };
 
 
@@ -868,6 +888,7 @@ class mjCMesh: public mjCMesh_, private mjsMesh {
   const std::vector<float>& UserTexcoord() const { return spec_texcoord_; }
   const std::vector<int>& Face() const { return face_; }
   const std::vector<int>& UserFace() const { return spec_face_; }
+  mjtMeshInertia Inertia() const { return spec.inertia; }
 
   // setters
   void SetNeedHull(bool needhull) { needhull_ = needhull; }
@@ -933,6 +954,7 @@ class mjCMesh: public mjCMesh_, private mjsMesh {
   void ApplyTransformations();                // apply user transformations
   void ComputeFaceCentroid(double[3]);        // compute centroid of all faces
   void CheckMesh(mjtGeomInertia type);        // check if the mesh is valid
+  void CopyPlugin();
 
   // mesh data to be copied into mjModel
   double* center_;                    // face circumcenter data (3*nface)
@@ -945,8 +967,7 @@ class mjCMesh: public mjCMesh_, private mjsMesh {
   std::vector<unsigned char> num_face_vertices_;
 
   // compute the volume and center-of-mass of the mesh given the face center
-  void ComputeVolume(double CoM[3], mjtGeomInertia type, const double facecen[3],
-                     bool exactmeshinertia);
+  void ComputeVolume(double CoM[3], mjtGeomInertia gtype, const double facecen[3]);
 };
 
 
@@ -1502,6 +1523,7 @@ class mjCActuator : public mjCActuator_, private mjsActuator {
   void PointToLocal();
   void ResolveReferences(const mjCModel* m);
   void NameSpace(const mjCModel* m);
+  void CopyPlugin();
 
   // reset keyframe references for allowing self-attach
   void ForgetKeyframes();
@@ -1555,6 +1577,7 @@ class mjCSensor : public mjCSensor_, private mjsSensor {
   void PointToLocal();
   void ResolveReferences(const mjCModel* m);
   void NameSpace(const mjCModel* m);
+  void CopyPlugin();
 
   mjCBase* obj;                   // sensorized object
   mjCBase* ref;                   // sensorized reference

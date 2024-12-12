@@ -56,6 +56,7 @@ def _collide(
   d = mujoco.MjData(m)
   dx = mjx.put_data(m, d)
 
+  m.opt.enableflags |= mujoco.mjtEnableBit.mjENBL_NATIVECCD
   mujoco.mj_step(m, d)
   collision_jit_fn = jax.jit(mjx.collision)
   kinematics_jit_fn = jax.jit(mjx.kinematics)
@@ -218,7 +219,8 @@ class EllipsoidCollisionTest(parameterized.TestCase):
     self.assertLess(dx.contact.dist[0], 0)
     for field in dataclasses.fields(Contact):
       _assert_attr_eq(
-          dx.contact, d.contact, field.name, 'ellipsoid-plane', 1e-5)
+          dx.contact, d.contact, field.name, 'ellipsoid-plane', 1e-5
+      )
 
   _ELLIPSOID_ELLIPSOID = """
     <mujoco>
@@ -240,7 +242,8 @@ class EllipsoidCollisionTest(parameterized.TestCase):
     self.assertLess(dx.contact.dist[0], 0)
     for field in dataclasses.fields(Contact):
       _assert_attr_eq(
-          dx.contact, d.contact, field.name, 'ellipsoid-ellipsoid', 1e-5)
+          dx.contact, d.contact, field.name, 'ellipsoid-ellipsoid', 1e-2
+      )
 
   _ELLIPSOID_SPHERE = """
     <mujoco>
@@ -263,7 +266,8 @@ class EllipsoidCollisionTest(parameterized.TestCase):
     self.assertLess(dx.contact.dist[0], 0)
     for field in dataclasses.fields(Contact):
       _assert_attr_eq(
-          dx.contact, d.contact, field.name, 'ellipsoid-sphere', 1e-4)
+          dx.contact, d.contact, field.name, 'ellipsoid-sphere', 1e-4
+      )
 
   _ELLIPSOID_CAPSULE = """
     <mujoco>
@@ -285,7 +289,8 @@ class EllipsoidCollisionTest(parameterized.TestCase):
     self.assertLess(dx.contact.dist[0], 0)
     for field in dataclasses.fields(Contact):
       _assert_attr_eq(
-          dx.contact, d.contact, field.name, 'ellipsoid-capsule', 1e-4)
+          dx.contact, d.contact, field.name, 'ellipsoid-capsule', 1e-5
+      )
 
   _ELLIPSOID_CYLINDER = """
     <mujoco>
@@ -308,7 +313,8 @@ class EllipsoidCollisionTest(parameterized.TestCase):
     self.assertLess(dx.contact.dist[0], 0)
     for field in dataclasses.fields(Contact):
       _assert_attr_eq(
-          dx.contact, d.contact, field.name, 'ellipsoid-cylinder', 1e-4)
+          dx.contact, d.contact, field.name, 'ellipsoid-cylinder', 1e-4
+      )
 
 
 class CapsuleCollisionTest(parameterized.TestCase):
@@ -550,7 +556,8 @@ class CylinderTest(absltest.TestCase):
 
     # cylinder is vertical
     xml = self._CYLINDER_PLANE.replace(
-        '<geom fromto="-0.1 0 0 0.1 0 0"', '<geom fromto="0 0 -0.1 0 0 0.1"')
+        '<geom fromto="-0.1 0 0 0.1 0 0"', '<geom fromto="0 0 -0.1 0 0 0.1"'
+    )
     xml = xml.replace('pos="0 0 0.04"', 'pos="0 0 0.095"')
     d, dx = _collide(xml)
 
@@ -579,7 +586,8 @@ class CylinderTest(absltest.TestCase):
     self.assertLess(dx.contact.dist[0], 0)
     for field in dataclasses.fields(Contact):
       _assert_attr_eq(
-          dx.contact, d.contact, field.name, 'sphere-cylinder', 1e-4)
+          dx.contact, d.contact, field.name, 'sphere-cylinder', 1e-4
+      )
 
 
 class ConvexTest(absltest.TestCase):
@@ -760,11 +768,14 @@ class ConvexTest(absltest.TestCase):
     np.testing.assert_array_less(0, c.dist[1:])
     np.testing.assert_array_almost_equal(c.frame[0, 0], np.array([0, 0, 1]))
     np.testing.assert_array_almost_equal(
-        c.pos[0], np.array([0, 2, 1.3155]), decimal=5)
+        c.pos[0], np.array([0, 2, 1.3155]), decimal=5
+    )
 
     _, dx = _collide(
         self._CONVEX_CONVEX_THIN.replace(
-            'pos="0.0 2.0 0.35"', 'pos="0.0 2.0 0"'))
+            'pos="0.0 2.0 0.35"', 'pos="0.0 2.0 0"'
+        )
+    )
     c = dx.contact
     self.assertTrue((c.dist > 0).all())
 

@@ -16,7 +16,7 @@
 #define MUJOCO_MUJOCO_H_
 
 // header version; should match the library version as returned by mj_version()
-#define mjVERSION_HEADER 325
+#define mjVERSION_HEADER 327
 
 // needed to define size_t, fabs and log10
 #include <stdlib.h>
@@ -117,10 +117,8 @@ MJAPI int mj_saveLastXML(const char* filename, const mjModel* m, char* error, in
 // Free last XML model if loaded. Called internally at each load.
 MJAPI void mj_freeLastXML(void);
 
-// Copy (possibly modified) model fields back into spec.
-MJAPI void mj_copyBack(mjSpec* s, const mjModel* m);
-
-// Save spec to XML string, return 1 on success, 0 otherwise.
+// Save spec to XML string, return 0 on success, -1 on failure.
+// If length of the output buffer is too small, returns the required size.
 MJAPI int mj_saveXMLString(const mjSpec* s, char* xml, int xml_sz, char* error, int error_sz);
 
 // Save spec to XML file, return 1 on success, 0 otherwise.
@@ -674,14 +672,6 @@ MJAPI void mjv_initGeom(mjvGeom* geom, int type, const mjtNum size[3],
 // Set (type, size, pos, mat) for connector-type geom between given points.
 // Assume that mjv_initGeom was already called to set all other properties.
 // Width of mjGEOM_LINE is denominated in pixels.
-// Deprecated: use mjv_connector.
-MJAPI void mjv_makeConnector(mjvGeom* geom, int type, mjtNum width,
-                             mjtNum a0, mjtNum a1, mjtNum a2,
-                             mjtNum b0, mjtNum b1, mjtNum b2);
-
-// Set (type, size, pos, mat) for connector-type geom between given points.
-// Assume that mjv_initGeom was already called to set all other properties.
-// Width of mjGEOM_LINE is denominated in pixels.
 MJAPI void mjv_connector(mjvGeom* geom, int type, mjtNum width,
                          const mjtNum from[3], const mjtNum to[3]);
 
@@ -702,6 +692,9 @@ MJAPI void mjv_updateScene(const mjModel* m, mjData* d, const mjvOption* opt,
 MJAPI int mjv_updateSceneFromState(const mjvSceneState* scnstate, const mjvOption* opt,
                                    const mjvPerturb* pert, mjvCamera* cam, int catmask,
                                    mjvScene* scn);
+
+// Copy mjModel, skip large arrays not required for abstract visualization.
+MJAPI void mjv_copyModel(mjModel* dest, const mjModel* src);
 
 // Set default scene state.
 MJAPI void mjv_defaultSceneState(mjvSceneState* scnstate);
@@ -978,12 +971,6 @@ MJAPI void mju_mulMatVec3(mjtNum res[3], const mjtNum mat[9], const mjtNum vec[3
 // Multiply transposed 3-by-3 matrix by vector: res = mat' * vec.
 MJAPI void mju_mulMatTVec3(mjtNum res[3], const mjtNum mat[9], const mjtNum vec[3]);
 
-// Deprecated, use mju_mulMatVec3(res, mat, vec).
-MJAPI void mju_rotVecMat(mjtNum res[3], const mjtNum vec[3], const mjtNum mat[9]);
-
-// Deprecated, use mju_mulMatTVec3(res, mat, vec).
-MJAPI void mju_rotVecMatT(mjtNum res[3], const mjtNum vec[3], const mjtNum mat[9]);
-
 // Compute cross-product: res = cross(a, b).
 MJAPI void mju_cross(mjtNum res[3], const mjtNum a[3], const mjtNum b[3]);
 
@@ -1084,6 +1071,18 @@ MJAPI void mju_transformSpatial(mjtNum res[6], const mjtNum vec[6], int flg_forc
                                 const mjtNum rotnew2old[9]);
 
 
+//---------------------------------- Sparse math ---------------------------------------------------
+
+// Convert matrix from dense to sparse.
+//  nnz is size of res and colind, return 1 if too small, 0 otherwise.
+MJAPI int mju_dense2sparse(mjtNum* res, const mjtNum* mat, int nr, int nc,
+                           int* rownnz, int* rowadr, int* colind, int nnz);
+
+// Convert matrix from sparse to dense.
+MJAPI void mju_sparse2dense(mjtNum* res, const mjtNum* mat, int nr, int nc,
+                            const int* rownnz, const int* rowadr, const int* colind);
+
+
 //---------------------------------- Quaternions ---------------------------------------------------
 
 // Rotate vector by quaternion.
@@ -1121,6 +1120,10 @@ MJAPI void mju_quatIntegrate(mjtNum quat[4], const mjtNum vel[3], mjtNum scale);
 
 // Construct quaternion performing rotation from z-axis to given vector.
 MJAPI void mju_quatZ2Vec(mjtNum quat[4], const mjtNum vec[3]);
+
+// extract 3D rotation from an arbitrary 3x3 matrix by refining the input quaternion
+// returns the number of iterations required to converge
+MJAPI int mju_mat2Rot(mjtNum quat[4], const mjtNum mat[9]);
 
 // Convert sequence of Euler angles (radians) to quaternion.
 // seq[0,1,2] must be in 'xyzXYZ', lower/upper-case mean intrinsic/extrinsic rotations.
@@ -1426,25 +1429,25 @@ MJAPI int mjs_detachBody(mjSpec* s, mjsBody* b);
 //---------------------------------- Tree elements -------------------------------------------------
 
 // Add child body to body, return child.
-MJAPI mjsBody* mjs_addBody(mjsBody* body, mjsDefault* def);
+MJAPI mjsBody* mjs_addBody(mjsBody* body, const mjsDefault* def);
 
 // Add site to body, return site spec.
-MJAPI mjsSite* mjs_addSite(mjsBody* body, mjsDefault* def);
+MJAPI mjsSite* mjs_addSite(mjsBody* body, const mjsDefault* def);
 
 // Add joint to body.
-MJAPI mjsJoint* mjs_addJoint(mjsBody* body, mjsDefault* def);
+MJAPI mjsJoint* mjs_addJoint(mjsBody* body, const mjsDefault* def);
 
 // Add freejoint to body.
 MJAPI mjsJoint* mjs_addFreeJoint(mjsBody* body);
 
 // Add geom to body.
-MJAPI mjsGeom* mjs_addGeom(mjsBody* body, mjsDefault* def);
+MJAPI mjsGeom* mjs_addGeom(mjsBody* body, const mjsDefault* def);
 
 // Add camera to body.
-MJAPI mjsCamera* mjs_addCamera(mjsBody* body, mjsDefault* def);
+MJAPI mjsCamera* mjs_addCamera(mjsBody* body, const mjsDefault* def);
 
 // Add light to body.
-MJAPI mjsLight* mjs_addLight(mjsBody* body, mjsDefault* def);
+MJAPI mjsLight* mjs_addLight(mjsBody* body, const mjsDefault* def);
 
 // Add frame to body.
 MJAPI mjsFrame* mjs_addFrame(mjsBody* body, mjsFrame* parentframe);
@@ -1456,7 +1459,7 @@ MJAPI void mjs_delete(mjsElement* element);
 //---------------------------------- Non-tree elements ---------------------------------------------
 
 // Add actuator.
-MJAPI mjsActuator* mjs_addActuator(mjSpec* s, mjsDefault* def);
+MJAPI mjsActuator* mjs_addActuator(mjSpec* s, const mjsDefault* def);
 
 // Add sensor.
 MJAPI mjsSensor* mjs_addSensor(mjSpec* s);
@@ -1465,16 +1468,16 @@ MJAPI mjsSensor* mjs_addSensor(mjSpec* s);
 MJAPI mjsFlex* mjs_addFlex(mjSpec* s);
 
 // Add contact pair.
-MJAPI mjsPair* mjs_addPair(mjSpec* s, mjsDefault* def);
+MJAPI mjsPair* mjs_addPair(mjSpec* s, const mjsDefault* def);
 
 // Add excluded body pair.
 MJAPI mjsExclude* mjs_addExclude(mjSpec* s);
 
 // Add equality.
-MJAPI mjsEquality* mjs_addEquality(mjSpec* s, mjsDefault* def);
+MJAPI mjsEquality* mjs_addEquality(mjSpec* s, const mjsDefault* def);
 
 // Add tendon.
-MJAPI mjsTendon* mjs_addTendon(mjSpec* s, mjsDefault* def);
+MJAPI mjsTendon* mjs_addTendon(mjSpec* s, const mjsDefault* def);
 
 // Wrap site using tendon.
 MJAPI mjsWrap* mjs_wrapSite(mjsTendon* tendon, const char* name);
@@ -1510,7 +1513,7 @@ MJAPI mjsDefault* mjs_addDefault(mjSpec* s, const char* classname, const mjsDefa
 //---------------------------------- Assets --------------------------------------------------------
 
 // Add mesh.
-MJAPI mjsMesh* mjs_addMesh(mjSpec* s, mjsDefault* def);
+MJAPI mjsMesh* mjs_addMesh(mjSpec* s, const mjsDefault* def);
 
 // Add height field.
 MJAPI mjsHField* mjs_addHField(mjSpec* s);
@@ -1522,13 +1525,16 @@ MJAPI mjsSkin* mjs_addSkin(mjSpec* s);
 MJAPI mjsTexture* mjs_addTexture(mjSpec* s);
 
 // Add material.
-MJAPI mjsMaterial* mjs_addMaterial(mjSpec* s, mjsDefault* def);
+MJAPI mjsMaterial* mjs_addMaterial(mjSpec* s, const mjsDefault* def);
 
 
 //---------------------------------- Find and get utilities ----------------------------------------
 
 // Get spec from body.
 MJAPI mjSpec* mjs_getSpec(mjsElement* element);
+
+// Find spec (model asset) by name.
+MJAPI mjSpec* mjs_findSpec(mjSpec* spec, const char* name);
 
 // Find body in spec by name.
 MJAPI mjsBody* mjs_findBody(mjSpec* s, const char* name);
@@ -1546,7 +1552,7 @@ MJAPI mjsFrame* mjs_findFrame(mjSpec* s, const char* name);
 MJAPI mjsDefault* mjs_getDefault(mjsElement* element);
 
 // Find default in model by class name.
-MJAPI mjsDefault* mjs_findDefault(mjSpec* s, const char* classname);
+MJAPI const mjsDefault* mjs_findDefault(mjSpec* s, const char* classname);
 
 // Get global default from model.
 MJAPI mjsDefault* mjs_getSpecDefault(mjSpec* s);
@@ -1616,9 +1622,9 @@ MJAPI const double* mjs_getDouble(const mjDoubleVec* source, int* size);
 //---------------------------------- Spec utilities ------------------------------------------------
 
 // Set element's default.
-MJAPI void mjs_setDefault(mjsElement* element, mjsDefault* def);
+MJAPI void mjs_setDefault(mjsElement* element, const mjsDefault* def);
 
-// Set element's enlcosing frame.
+// Set element's enclosing frame.
 MJAPI void mjs_setFrame(mjsElement* dest, mjsFrame* frame);
 
 // Resolve alternative orientations to quat, return error if any.

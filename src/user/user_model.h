@@ -118,6 +118,7 @@ class mjCModel_ : public mjsElement {
   int nB;              // number of non-zeros in sparse body-dof matrix
   int nC;              // number of non-zeros in reduced sparse dof-dof matrix
   int nD;              // number of non-zeros in sparse dof-dof matrix
+  int nJmom;           // number of non-zeros in sparse actuator_moment matrix
 
   // statistics, as computed by mj_setConst
   double meaninertia_auto;  // mean diagonal inertia, as computed by mj_setConst
@@ -322,6 +323,8 @@ class mjCModel : public mjCModel_, private mjSpec {
   void CopyPaths(mjModel*);             // copy paths, compute path addresses
   void CopyObjects(mjModel*);           // copy objects outside kinematic tree
   void CopyTree(mjModel*);              // copy objects inside kinematic tree
+  void CopyPlugins(mjModel*);           // copy plugin data
+  int CountNJmom(const mjModel* m);     // compute number of non-zeros in actuator_moment matrix
 
   // objects created here
   std::vector<mjCFlex*>     flexes_;      // list of flexes
@@ -366,9 +369,11 @@ class mjCModel : public mjCModel_, private mjSpec {
   template <class T> void CopyList(std::vector<T*>& dest,
                                    const std::vector<T*>& sources);
 
+  // copy plugins that are explicitly instantiated by the argument object to this model
+  template <class T> void CopyExplicitPlugin(T* obj);
+
   // copy vector of plugins to this model
-  template <class T> void CopyPlugin(std::vector<mjCPlugin*>& dest,
-                                     const std::vector<mjCPlugin*>& sources,
+  template <class T> void CopyPlugin(const std::vector<mjCPlugin*>& sources,
                                      const std::vector<T*>& list);
 
   // delete from list the elements that cause an error
@@ -393,9 +398,7 @@ class mjCModel : public mjCModel_, private mjSpec {
   void ResizeKeyframe(mjCKey* key, const mjtNum* qpos0_, const mjtNum* bpos, const mjtNum* bquat);
 
   // compute qpos0
-  template <class T>
-  void ComputeReference(std::vector<T>& q0, std::vector<T>& bpos,
-                        std::vector<T>& bquat);
+  void ComputeReference();
 
   mjListKeyMap ids;   // map from object names to ids
   mjCError errInfo;   // last error info

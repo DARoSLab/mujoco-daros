@@ -134,6 +134,18 @@ PNGImage PNGImage::Load(const mjCBase* obj, mjResource* resource,
   return image;
 }
 
+// associate all child list elements with a frame and copy them to parent list, clear child list
+template <typename T>
+void MapFrame(std::vector<T*>& parent, std::vector<T*>& child,
+              mjCFrame* frame, mjCBody* parent_body) {
+  std::for_each(child.begin(), child.end(), [frame, parent_body](T* element) {
+    element->SetFrame(frame);
+    element->SetParent(parent_body);
+  });
+  parent.insert(parent.end(), child.begin(), child.end());
+  child.clear();
+}
+
 }  // namespace
 
 
@@ -696,7 +708,7 @@ void mjCBase::NameSpace(const mjCModel* m) {
   if (!name.empty()) {
     name = m->prefix + name + m->suffix;
   }
-  if (!classname.empty() && m != model) {
+  if (!classname.empty() && classname != "main" && m != model) {
     classname = m->prefix + classname + m->suffix;
   }
 }
@@ -749,10 +761,11 @@ void mjCBase::SetFrame(mjCFrame* _frame) {
 mjCBody::mjCBody(mjCModel* _model) {
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   mjs_defaultBody(&spec);
   elemtype = mjOBJ_BODY;
-  parentid = -1;
+  parent = nullptr;
   weldid = -1;
   dofnum = 0;
   lastdof = -1;
@@ -785,7 +798,10 @@ mjCBody::mjCBody(mjCModel* _model) {
 
 mjCBody::mjCBody(const mjCBody& other, mjCModel* _model) {
   model = _model;
+  mjSpec* origin = model->FindSpec(mjs_getString(other.model->spec.modelname));
+  compiler = origin ? &origin->compiler : &model->spec.compiler;
   *this = other;
+  CopyPlugin();
 }
 
 
@@ -834,6 +850,7 @@ mjCBody& mjCBody::operator+=(const mjCBody& other) {
 
   for (int i=0; i<other.bodies.size(); i++) {
     bodies.push_back(new mjCBody(*other.bodies[i], model));  // triggers recursive call
+    bodies.back()->parent = this;
     bodies.back()->frame =
         other.bodies[i]->frame ? frames[fmap[other.bodies[i]->frame]] : nullptr;
   }
@@ -845,6 +862,12 @@ mjCBody& mjCBody::operator+=(const mjCBody& other) {
 
 // attach frame to body
 mjCBody& mjCBody::operator+=(const mjCFrame& other) {
+  // append a copy of the attached spec
+  if (other.model != model && !model->FindSpec(mjs_getString(other.model->spec.modelname))) {
+    model->AppendSpec(mj_copySpec(&other.model->spec));
+  }
+
+  // create a copy of the subtree that contains the frame
   mjCBody* subtree = other.body;
   other.model->prefix = other.prefix;
   other.model->suffix = other.suffix;
@@ -858,9 +881,11 @@ mjCBody& mjCBody::operator+=(const mjCFrame& other) {
   }
 
   // copy input frame
+  mjSpec* origin = model->FindSpec(mjs_getString(other.model->spec.modelname));
   frames.push_back(new mjCFrame(other));
   frames.back()->body = this;
   frames.back()->model = model;
+  frames.back()->compiler = origin ? &origin->compiler : &model->spec.compiler;
   frames.back()->frame = other.frame;
   frames.back()->NameSpace(other.model);
   int i = frames.size();
@@ -890,6 +915,7 @@ mjCBody& mjCBody::operator+=(const mjCFrame& other) {
       continue;
     }
     bodies.push_back(new mjCBody(*subtree->bodies[i], model));  // triggers recursive call
+    bodies.back()->parent = this;
     bodies.back()->frame =
         subtree->bodies[i]->frame ? frames[fmap[subtree->bodies[i]->frame]] : nullptr;
     bodies.back()->NameSpace_(other.model, /*propagate=*/ false);
@@ -921,10 +947,13 @@ void mjCBody::CopyList(std::vector<T*>& dst, const std::vector<T*>& src,
     if (pframe && !pframe->IsAncestor(src[i]->frame)) {
       continue;  // skip if the element is not inside pframe
     }
+    mjSpec* origin = model->FindSpec(mjs_getString(src[i]->model->spec.modelname));
     dst.push_back(new T(*src[i]));
     dst.back()->body = this;
     dst.back()->model = model;
+    dst.back()->compiler = origin ? &origin->compiler : &model->spec.compiler;
     dst.back()->id = -1;
+    dst.back()->CopyPlugin();
     dst.back()->classname = src[i]->classname;
 
     // assign dst frame to src frame
@@ -975,6 +1004,12 @@ void mjCBody::CopyFromSpec() {
 
 
 
+void mjCBody::CopyPlugin() {
+  model->CopyExplicitPlugin(this);
+}
+
+
+
 // destructor
 mjCBody::~mjCBody() {
   // delete objects allocated here
@@ -994,7 +1029,7 @@ mjCBody::~mjCBody() {
   cameras.clear();
   lights.clear();
 
-  if (spec.plugin.active && spec.plugin.name->empty()) {
+  if (spec.plugin.active && spec.plugin.name->empty() && model) {
     model->DeleteElement(spec.plugin.element);
   }
 }
@@ -1010,12 +1045,7 @@ void mjCBody::NameSpace(const mjCModel* m) {
 
 // apply prefix and suffix, propagate to all descendents or only to child bodies
 void mjCBody::NameSpace_(const mjCModel* m, bool propagate) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
-  if (!classname.empty() && m != model) {
-    classname = m->prefix + classname + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   if (!plugin_instance_name.empty()) {
     plugin_instance_name = m->prefix + plugin_instance_name + m->suffix;
   }
@@ -1066,6 +1096,7 @@ mjCBody* mjCBody::AddBody(mjCDef* _def) {
   obj->classname = _def ? _def->name : classname;
 
   bodies.push_back(obj);
+  obj->parent = this;
   return obj;
 }
 
@@ -1167,32 +1198,25 @@ mjCLight* mjCBody::AddLight(mjCDef* _def) {
 
 // create a frame in the parent body and move all contents of this body into it
 mjCFrame* mjCBody::ToFrame() {
-  if (parentid < 0) {
-    // TODO: store the parent pointer instead of using the id
-    throw mjCError(this, "parent body is not defined, please compile the model first");
-  }
-  mjCBody* parent = model->Bodies()[parentid];
   mjCFrame* newframe = parent->AddFrame(frame);
   mjuu_copyvec(newframe->spec.pos, spec.pos, 3);
   mjuu_copyvec(newframe->spec.quat, spec.quat, 4);
-  parent->bodies.insert(parent->bodies.end(), bodies.begin(), bodies.end());
-  parent->geoms.insert(parent->geoms.end(), geoms.begin(), geoms.end());
-  parent->joints.insert(parent->joints.end(), joints.begin(), joints.end());
-  parent->sites.insert(parent->sites.end(), sites.begin(), sites.end());
-  parent->cameras.insert(parent->cameras.end(), cameras.begin(), cameras.end());
-  parent->lights.insert(parent->lights.end(), lights.begin(), lights.end());
-  parent->frames.insert(parent->frames.end(), frames.begin(), frames.end());
-  bodies.clear();
-  geoms.clear();
-  joints.clear();
-  sites.clear();
-  cameras.clear();
-  lights.clear();
-  frames.clear();
+  MapFrame(parent->bodies, bodies, newframe, parent);
+  MapFrame(parent->geoms, geoms, newframe, parent);
+  MapFrame(parent->joints, joints, newframe, parent);
+  MapFrame(parent->sites, sites, newframe, parent);
+  MapFrame(parent->cameras, cameras, newframe, parent);
+  MapFrame(parent->lights, lights, newframe, parent);
+  MapFrame(parent->frames, frames, newframe, parent);
   parent->bodies.erase(
       std::remove_if(parent->bodies.begin(), parent->bodies.end(),
                      [this](mjCBody* body) { return body == this; }),
       parent->bodies.end());
+  if (model->IsCompiled()) {
+    mjCBody *world = model->bodies_[0];
+    model->ResetTreeLists();
+    model->MakeLists(world);
+  }
   return newframe;
 }
 
@@ -1408,8 +1432,8 @@ void mjCBody::InertiaFromGeom(void) {
   // select geoms based on group
   sel.clear();
   for (int i=0; i<geoms.size(); i++) {
-    if (geoms[i]->group>=model->inertiagrouprange[0] &&
-        geoms[i]->group<=model->inertiagrouprange[1]) {
+    if (geoms[i]->group>=compiler->inertiagrouprange[0] &&
+        geoms[i]->group<=compiler->inertiagrouprange[1]) {
       sel.push_back(geoms[i]);
     }
   }
@@ -1548,13 +1572,12 @@ void mjCBody::Compile(void) {
 
   // set parentid and weldid of children
   for (int i=0; i<bodies.size(); i++) {
-    bodies[i]->parentid = id;
     bodies[i]->weldid = (!bodies[i]->joints.empty() ? bodies[i]->id : weldid);
   }
 
   // check and process orientation alternatives for body
   if (alt.type != mjORIENTATION_QUAT) {
-    const char* err = ResolveOrientation(quat, model->degree, model->eulerseq, alt);
+    const char* err = ResolveOrientation(quat, compiler->degree, compiler->eulerseq, alt);
     if (err) {
       throw mjCError(this, "error '%s' in frame alternative", err);
     }
@@ -1577,7 +1600,7 @@ void mjCBody::Compile(void) {
   }
 
   if (ialt.type != mjORIENTATION_QUAT) {
-    const char* err = ResolveOrientation(iquat, model->degree, model->eulerseq, ialt);
+    const char* err = ResolveOrientation(iquat, compiler->degree, compiler->eulerseq, ialt);
     if (err) {
       throw mjCError(this, "error '%s' in inertia alternative", err);
     }
@@ -1586,15 +1609,15 @@ void mjCBody::Compile(void) {
   // compile all geoms
   for (int i=0; i<geoms.size(); i++) {
     geoms[i]->inferinertia = id>0 &&
-      (!explicitinertial || model->inertiafromgeom == mjINERTIAFROMGEOM_TRUE) &&
-      geoms[i]->spec.group >= model->inertiagrouprange[0] &&
-      geoms[i]->spec.group <= model->inertiagrouprange[1];
+      (!explicitinertial || compiler->inertiafromgeom == mjINERTIAFROMGEOM_TRUE) &&
+      geoms[i]->spec.group >= compiler->inertiagrouprange[0] &&
+      geoms[i]->spec.group <= compiler->inertiagrouprange[1];
     geoms[i]->Compile();
   }
 
   // set inertial frame from geoms if necessary
-  if (id>0 && (model->inertiafromgeom==mjINERTIAFROMGEOM_TRUE ||
-               (!mjuu_defined(ipos[0]) && model->inertiafromgeom==mjINERTIAFROMGEOM_AUTO))) {
+  if (id>0 && (compiler->inertiafromgeom==mjINERTIAFROMGEOM_TRUE ||
+               (!mjuu_defined(ipos[0]) && compiler->inertiafromgeom==mjINERTIAFROMGEOM_AUTO))) {
     InertiaFromGeom();
   }
 
@@ -1607,10 +1630,10 @@ void mjCBody::Compile(void) {
   // check and correct mass and inertia
   if (id>0) {
     // fix minimum
-    mass = std::max(mass, model->boundmass);
-    inertia[0] = std::max(inertia[0], model->boundinertia);
-    inertia[1] = std::max(inertia[1], model->boundinertia);
-    inertia[2] = std::max(inertia[2], model->boundinertia);
+    mass = std::max(mass, compiler->boundmass);
+    inertia[0] = std::max(inertia[0], compiler->boundinertia);
+    inertia[1] = std::max(inertia[1], compiler->boundinertia);
+    inertia[2] = std::max(inertia[2], compiler->boundinertia);
 
     // check for negative values
     if (mass<0 || inertia[0]<0 || inertia[1]<0 ||inertia[2]<0) {
@@ -1621,7 +1644,7 @@ void mjCBody::Compile(void) {
     if (inertia[0] + inertia[1] < inertia[2] ||
         inertia[0] + inertia[2] < inertia[1] ||
         inertia[1] + inertia[2] < inertia[0]) {
-      if (model->balanceinertia) {
+      if (compiler->balanceinertia) {
         inertia[0] = inertia[1] = inertia[2] = (inertia[0] + inertia[1] + inertia[2])/3.0;
       } else {
         throw mjCError(this, "inertia must satisfy A + B >= C; use 'balanceinertia' to fix");
@@ -1649,7 +1672,7 @@ void mjCBody::Compile(void) {
                      bodies.empty()                      &&  // no child bodies AND
                      (joints[0]->spec.align == 1 ||          // either joint.align="true"
                       (joints[0]->spec.align == 2        &&  // or joint.align="auto"
-                       model->alignfree)));                  //  and compiler.align="true"
+                       compiler->alignfree)));                  //  and compiler->align="true"
 
   // free-joint alignment, phase 1 (this body + child geoms)
   double ipos_inverse[3], iquat_inverse[4];
@@ -1696,13 +1719,12 @@ void mjCBody::Compile(void) {
   }
 
   // make sure mocap body is fixed child of world
-  if (mocap && (dofnum || parentid)) {
+  if (mocap && (dofnum || (parent && parent->name != "world"))) {
     throw mjCError(this, "mocap body '%s' is not a fixed child of world", name.c_str());
   }
 
   // compute body global pose (no joint transformations in qpos0)
   if (id>0) {
-    mjCBody* parent = model->Bodies()[parentid];
     mjuu_rotVecQuat(xpos0, pos, parent->xquat0);
     mjuu_addtovec(xpos0, parent->xpos0, 3);
     mjuu_mulquat(xquat0, parent->xquat0, quat);
@@ -1735,7 +1757,7 @@ void mjCBody::Compile(void) {
   }
 
   // if discarding visual geoms, use explicit inertias
-  if (model->discardvisual) {
+  if (compiler->discardvisual) {
     for (int j=0; j<geoms.size(); j++) {
       if (geoms[j]->IsVisual()) {
         explicitinertial = true;
@@ -1777,6 +1799,7 @@ mjCFrame::mjCFrame(mjCModel* _model, mjCFrame* _frame) {
   elemtype = mjOBJ_FRAME;
   compiled = false;
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   body = NULL;
   frame = _frame ? _frame : NULL;
   last_attached = nullptr;
@@ -1806,6 +1829,12 @@ mjCFrame& mjCFrame::operator=(const mjCFrame& other) {
 
 // attach body to frame
 mjCFrame& mjCFrame::operator+=(const mjCBody& other) {
+  // append a copy of the attached spec
+  if (other.model != model && !model->FindSpec(mjs_getString(other.model->spec.modelname))) {
+    model->AppendSpec(mj_copySpec(&other.model->spec));
+  }
+
+  // apply namespace and store keyframes in the source model
   other.model->prefix = other.prefix;
   other.model->suffix = other.suffix;
   other.model->StoreKeyframes(model);
@@ -1816,6 +1845,7 @@ mjCFrame& mjCFrame::operator+=(const mjCBody& other) {
   other.ForgetKeyframes();
   other.model->prefix = subtree->prefix;
   other.model->suffix = subtree->suffix;
+  subtree->SetParent(body);
   subtree->SetFrame(this);
   subtree->NameSpace(other.model);
 
@@ -1861,12 +1891,6 @@ bool mjCFrame::IsAncestor(const mjCFrame* child) const {
 
 
 
-void mjCFrame::SetParent(mjCBody* _body) {
-  body = _body;
-}
-
-
-
 void mjCFrame::PointToLocal() {
   spec.element = static_cast<mjsElement*>(this);
   spec.name = &name;
@@ -1890,7 +1914,7 @@ void mjCFrame::Compile() {
   }
 
   CopyFromSpec();
-  const char* err = ResolveOrientation(quat, model->spec.degree, model->spec.eulerseq, alt);
+  const char* err = ResolveOrientation(quat, compiler->degree, compiler->eulerseq, alt);
   if (err) {
     throw mjCError(this, "orientation specification error '%s' in site %d", err, id);
   }
@@ -1925,6 +1949,7 @@ mjCJoint::mjCJoint(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   // point to local
@@ -2054,7 +2079,7 @@ int mjCJoint::Compile(void) {
   // otherwise if limited is auto, check consistency wrt auto-limits
   else if (limited == mjLIMITED_AUTO) {
     bool hasrange = !(range[0]==0 && range[1]==0);
-    checklimited(this, model->autolimits, "joint", "", limited, hasrange);
+    checklimited(this, compiler->autolimits, "joint", "", limited, hasrange);
   }
 
   // resolve limits
@@ -2068,7 +2093,7 @@ int mjCJoint::Compile(void) {
     }
 
     // convert limits to radians
-    if (model->degree && (type==mjJNT_HINGE || type==mjJNT_BALL)) {
+    if (compiler->degree && (type==mjJNT_HINGE || type==mjJNT_BALL)) {
       if (range[0]) {
         range[0] *= mjPI/180.0;
       }
@@ -2085,7 +2110,7 @@ int mjCJoint::Compile(void) {
   // otherwise if actfrclimited is auto, check consistency wrt auto-limits
   else if (actfrclimited == mjLIMITED_AUTO) {
     bool hasrange = !(actfrcrange[0]==0 && actfrcrange[1]==0);
-    checklimited(this, model->autolimits, "joint", "", actfrclimited, hasrange);
+    checklimited(this, compiler->autolimits, "joint", "", actfrclimited, hasrange);
   }
 
   // resolve actuator force range limits
@@ -2129,7 +2154,7 @@ int mjCJoint::Compile(void) {
   }
 
   // convert reference angles to radians for hinge joints
-  if (type==mjJNT_HINGE && model->degree) {
+  if (type==mjJNT_HINGE && compiler->degree) {
     ref *= mjPI/180.0;
     springref *= mjPI/180.0;
   }
@@ -2178,6 +2203,7 @@ mjCGeom::mjCGeom(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   // point to local
@@ -2196,7 +2222,7 @@ mjCGeom::mjCGeom(const mjCGeom& other) {
 
 
 mjCGeom::~mjCGeom() {
-  if (spec.plugin.active && spec.plugin.name->empty()) {
+  if (spec.plugin.active && spec.plugin.name->empty() && model) {
     model->DeleteElement(spec.plugin.element);
   }
 }
@@ -2248,13 +2274,14 @@ void mjCGeom::CopyFromSpec() {
 
 
 
+void mjCGeom::CopyPlugin() {
+  model->CopyExplicitPlugin(this);
+}
+
+
+
 void mjCGeom::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
-  if (!classname.empty() && m != model) {
-    classname = m->prefix + classname + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   if (!spec_material_.empty() && model != m) {
     spec_material_ = m->prefix + spec_material_ + m->suffix;
   }
@@ -2882,7 +2909,7 @@ void mjCGeom::Compile(void) {
 
   // not 'fromto': try alternative
   else {
-    const char* err = ResolveOrientation(quat, model->degree, model->eulerseq, alt);
+    const char* err = ResolveOrientation(quat, compiler->degree, compiler->eulerseq, alt);
     if (err) {
       throw mjCError(this, "orientation specification error '%s' in geom %d", err, id);
     }
@@ -3024,6 +3051,7 @@ mjCSite::mjCSite(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 }
 
@@ -3063,6 +3091,15 @@ void mjCSite::CopyFromSpec() {
   *static_cast<mjsSite*>(this) = spec;
   userdata_ = spec_userdata_;
   material_ = spec_material_;
+}
+
+
+
+void mjCSite::NameSpace(const mjCModel* m) {
+  mjCBase::NameSpace(m);
+  if (!spec_material_.empty() && model != m) {
+    spec_material_ = m->prefix + spec_material_ + m->suffix;
+  }
 }
 
 
@@ -3130,7 +3167,7 @@ void mjCSite::Compile(void) {
 
   // alternative orientation
   else {
-    const char* err = ResolveOrientation(quat, model->degree, model->eulerseq, alt);
+    const char* err = ResolveOrientation(quat, compiler->degree, compiler->eulerseq, alt);
     if (err) {
       throw mjCError(this, "orientation specification error '%s' in site %d", err, id);
     }
@@ -3169,6 +3206,7 @@ mjCCamera::mjCCamera(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   // point to local
@@ -3211,12 +3249,7 @@ void mjCCamera::PointToLocal() {
 
 
 void mjCCamera::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
-  if (!classname.empty() && m != model) {
-    classname = m->prefix + classname + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   if (!spec_targetbody_.empty()) {
     spec_targetbody_ = m->prefix + spec_targetbody_ + m->suffix;
   }
@@ -3243,7 +3276,7 @@ void mjCCamera::Compile(void) {
   userdata_.resize(model->nuser_cam);
 
   // process orientation specifications
-  const char* err = ResolveOrientation(quat, model->degree, model->eulerseq, alt);
+  const char* err = ResolveOrientation(quat, compiler->degree, compiler->eulerseq, alt);
   if (err) {
     throw mjCError(this, "orientation specification error '%s' in camera %d", err, id);
   }
@@ -3325,6 +3358,7 @@ mjCLight::mjCLight(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   PointToLocal();
@@ -3362,12 +3396,7 @@ void mjCLight::PointToLocal() {
 
 
 void mjCLight::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
-  if (!classname.empty() && m != model) {
-    classname = m->prefix + classname + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   if (!spec_targetbody_.empty()) {
     spec_targetbody_ = m->prefix + spec_targetbody_ + m->suffix;
   }
@@ -3423,6 +3452,7 @@ mjCHField::mjCHField(mjCModel* _model) {
 
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   // clear variables
   data.clear();
@@ -3678,6 +3708,7 @@ mjCTexture::mjCTexture(mjCModel* _model) {
 
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   // clear user settings: single file
   spec_file_.clear();
@@ -4511,6 +4542,7 @@ mjCMaterial::mjCMaterial(mjCModel* _model, mjCDef* _def) {
   }
 
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   PointToLocal();
@@ -4557,9 +4589,7 @@ void mjCMaterial::CopyFromSpec() {
 
 
 void mjCMaterial::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   for (int i=0; i<mjNTEXROLE; i++) {
     if (!spec_textures_[i].empty() && model != m) {
       spec_textures_[i] = m->prefix + spec_textures_[i] + m->suffix;
@@ -4599,6 +4629,7 @@ mjCPair::mjCPair(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   // point to local
@@ -4643,9 +4674,7 @@ void mjCPair::PointToLocal() {
 
 
 void mjCPair::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   prefix = m->prefix;
   suffix = m->suffix;
 }
@@ -4821,6 +4850,7 @@ void mjCPair::Compile(void) {
 mjCBodyPair::mjCBodyPair(mjCModel* _model) {
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   elemtype = mjOBJ_EXCLUDE;
 
   // set defaults
@@ -4959,6 +4989,7 @@ mjCEquality::mjCEquality(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   // point to local
@@ -5001,11 +5032,13 @@ void mjCEquality::PointToLocal() {
 
 
 void mjCEquality::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
+  mjCBase::NameSpace(m);
+  if (!spec_name1_.empty()) {
+    spec_name1_ = m->prefix + spec_name1_ + m->suffix;
   }
-  spec_name1_ = m->prefix + spec_name1_ + m->suffix;
-  spec_name2_ = m->prefix + spec_name2_ + m->suffix;
+  if (!spec_name2_.empty()) {
+    spec_name2_ = m->prefix + spec_name2_ + m->suffix;
+  }
 }
 
 
@@ -5122,6 +5155,7 @@ mjCTendon::mjCTendon(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   // point to local
@@ -5171,9 +5205,7 @@ void mjCTendon::PointToLocal() {
 
 
 void mjCTendon::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   prefix = m->prefix;
   suffix = m->suffix;
 }
@@ -5209,6 +5241,7 @@ mjCTendon::~mjCTendon() {
 
 void mjCTendon::SetModel(mjCModel* _model) {
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   for (int i=0; i<path.size(); i++) {
     path[i]->model = _model;
   }
@@ -5431,7 +5464,7 @@ void mjCTendon::Compile(void) {
   // if limited is auto, set to 1 if range is specified, otherwise unlimited
   if (limited == mjLIMITED_AUTO) {
     bool hasrange = !(range[0]==0 && range[1]==0);
-    checklimited(this, model->autolimits, "tendon", "", limited, hasrange);
+    checklimited(this, compiler->autolimits, "tendon", "", limited, hasrange);
   }
 
   // check limits
@@ -5455,6 +5488,7 @@ mjCWrap::mjCWrap(mjCModel* _model, mjCTendon* _tendon) {
 
   // set model and tendon pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   tendon = _tendon;
 
   // clear variables
@@ -5498,7 +5532,9 @@ void mjCWrap::PointToLocal() {
 
 void mjCWrap::NameSpace(const mjCModel* m) {
   name = m->prefix + name + m->suffix;
-  sidesite = m->prefix + sidesite + m->suffix;
+  if (!sidesite.empty()) {
+    sidesite = m->prefix + sidesite + m->suffix;
+  }
 }
 
 
@@ -5599,6 +5635,7 @@ mjCActuator::mjCActuator(mjCModel* _model, mjCDef* _def) {
 
   // set model, def
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   classname = _def ? _def->name : "main";
 
   // in case this actuator is not compiled
@@ -5621,7 +5658,7 @@ mjCActuator::mjCActuator(const mjCActuator& other) {
 
 
 mjCActuator::~mjCActuator() {
-  if (spec.plugin.active && spec.plugin.name->empty()) {
+  if (spec.plugin.active && spec.plugin.name->empty() && model) {
     model->DeleteElement(spec.plugin.element);
   }
 }
@@ -5691,15 +5728,19 @@ void mjCActuator::PointToLocal() {
 
 
 void mjCActuator::NameSpace(const mjCModel* m) {
-  if (!name.empty()) {
-    name = m->prefix + name + m->suffix;
-  }
+  mjCBase::NameSpace(m);
   if (!plugin_instance_name.empty()) {
     plugin_instance_name = m->prefix + plugin_instance_name + m->suffix;
   }
-  spec_target_ = m->prefix + spec_target_ + m->suffix;
-  spec_refsite_ = m->prefix + spec_refsite_ + m->suffix;
-  spec_slidersite_ = m->prefix + spec_slidersite_ + m->suffix;
+  if (!spec_target_.empty()) {
+    spec_target_ = m->prefix + spec_target_ + m->suffix;
+  }
+  if (!spec_refsite_.empty()) {
+    spec_refsite_ = m->prefix + spec_refsite_ + m->suffix;
+  }
+  if (!spec_slidersite_.empty()) {
+    spec_slidersite_ = m->prefix + spec_slidersite_ + m->suffix;
+  }
 }
 
 
@@ -5714,6 +5755,12 @@ void mjCActuator::CopyFromSpec() {
   plugin.element = spec.plugin.element;
   plugin.plugin_name = spec.plugin.plugin_name;
   plugin.name = spec.plugin.name;
+}
+
+
+
+void mjCActuator::CopyPlugin() {
+  model->CopyExplicitPlugin(this);
 }
 
 
@@ -5856,15 +5903,15 @@ void mjCActuator::Compile(void) {
   // if limited is auto, check for inconsistency wrt to autolimits
   if (forcelimited == mjLIMITED_AUTO) {
     bool hasrange = !(forcerange[0]==0 && forcerange[1]==0);
-    checklimited(this, model->autolimits, "actuator", "force", forcelimited, hasrange);
+    checklimited(this, compiler->autolimits, "actuator", "force", forcelimited, hasrange);
   }
   if (ctrllimited == mjLIMITED_AUTO) {
     bool hasrange = !(ctrlrange[0]==0 && ctrlrange[1]==0);
-    checklimited(this, model->autolimits, "actuator", "ctrl", ctrllimited, hasrange);
+    checklimited(this, compiler->autolimits, "actuator", "ctrl", ctrllimited, hasrange);
   }
   if (actlimited == mjLIMITED_AUTO) {
     bool hasrange = !(actrange[0]==0 && actrange[1]==0);
-    checklimited(this, model->autolimits, "actuator", "act", actlimited, hasrange);
+    checklimited(this, compiler->autolimits, "actuator", "act", actlimited, hasrange);
   }
 
   // check limits
@@ -5961,6 +6008,7 @@ mjCSensor::mjCSensor(mjCModel* _model) {
 
   // set model
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   // clear private variables
   spec_objname_.clear();
@@ -5986,7 +6034,7 @@ mjCSensor::mjCSensor(const mjCSensor& other) {
 
 
 mjCSensor::~mjCSensor() {
-  if (spec.plugin.active && spec.plugin.name->empty()) {
+  if (spec.plugin.active && spec.plugin.name->empty() && model) {
     model->DeleteElement(spec.plugin.element);
   }
 }
@@ -6045,6 +6093,12 @@ void mjCSensor::CopyFromSpec() {
   plugin.element = spec.plugin.element;
   plugin.plugin_name = spec.plugin.plugin_name;
   plugin.name = spec.plugin.name;
+}
+
+
+
+void mjCSensor::CopyPlugin() {
+  model->CopyExplicitPlugin(this);
 }
 
 
@@ -6487,6 +6541,7 @@ mjCNumeric::mjCNumeric(mjCModel* _model) {
 
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   // clear variables
   spec_data_.clear();
@@ -6576,6 +6631,7 @@ mjCText::mjCText(mjCModel* _model) {
 
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   // clear variables
   spec_data_.clear();
@@ -6653,6 +6709,7 @@ mjCTuple::mjCTuple(mjCModel* _model) {
 
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   // clear variables
   spec_objtype_.clear();
@@ -6786,6 +6843,7 @@ mjCKey::mjCKey(mjCModel* _model) {
 
   // set model pointer
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
 
   // clear variables
   spec_qpos_.clear();
@@ -6962,6 +7020,7 @@ mjCPlugin::mjCPlugin(mjCModel* _model) {
   plugin_slot = -1;
   parent = this;
   model = _model;
+  if (_model) compiler = &_model->spec.compiler;
   name.clear();
   plugin_name.clear();
 

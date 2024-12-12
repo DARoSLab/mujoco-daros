@@ -625,10 +625,10 @@ void mj_makeModel(mjModel** dest,
   }
 }
 
+
+
 // copy mjModel, if dest==NULL create new model
 mjModel* mj_copyModel(mjModel* dest, const mjModel* src) {
-  void* save_bufptr;
-
   // allocate new model if needed
   if (!dest) {
     mj_makeModel(&dest,
@@ -658,13 +658,13 @@ mjModel* mj_copyModel(mjModel* dest, const mjModel* src) {
     mjERROR("dest and src models have different buffer size");
   }
 
-  // save buffer ptr, copy everything, restore buffer and other pointers
-  save_bufptr = dest->buffer;
+  // save buffer ptr, copy struct, restore buffer and other pointers
+  void* save_bufptr = dest->buffer;
   *dest = *src;
   dest->buffer = save_bufptr;
   mj_setPtrModel(dest);
 
-  // copy buffer
+  // copy buffer contents
   {
     MJMODEL_POINTERS_PREAMBLE(src)
     #define X(type, name, nr, nc)  \
@@ -674,6 +674,38 @@ mjModel* mj_copyModel(mjModel* dest, const mjModel* src) {
   }
 
   return dest;
+}
+
+
+
+// copy mjModel, skip large arrays not required for abstract visualization
+void mjv_copyModel(mjModel* dest, const mjModel* src) {
+  // check sizes
+  if (dest->nbuffer != src->nbuffer) {
+    mjERROR("dest and src models have different buffer size");
+  }
+
+  // save buffer ptr, copy struct, restore buffer and other pointers
+  void* save_bufptr = dest->buffer;
+  *dest = *src;
+  dest->buffer = save_bufptr;
+  mj_setPtrModel(dest);
+
+  // redefine XNV to do nothing
+  #undef XNV
+  #define XNV(type, name, nr, nc)
+
+  // copy buffer contents, skipping arrays marked XNV
+  {
+    MJMODEL_POINTERS_PREAMBLE(src)
+    #define X(type, name, nr, nc)    \
+      memcpy((char*)dest->name, (const char*)src->name, sizeof(type)*(src->nr)*nc);
+    MJMODEL_POINTERS
+    #undef X
+  }
+  // redefine XNV to be the same as X
+  #undef XNV
+  #define XNV X
 }
 
 
@@ -889,7 +921,8 @@ int mj_sizeModel(const mjModel* m) {
 
 // construct sparse representation of dof-dof matrix
 static void makeDofDofSparse(const mjModel* m, mjData* d,
-                             int* rownnz, int* rowadr, int* colind, int reduced) {
+                             int* rownnz, int* rowadr,  int* diag, int* colind,
+                             int reduced) {
   int nv = m->nv;
 
   // no dofs, nothing to do
@@ -898,7 +931,7 @@ static void makeDofDofSparse(const mjModel* m, mjData* d,
   }
 
   mj_markStack(d);
-  int* remaining = mj_stackAllocInt(d, nv);
+  int* remaining = mjSTACKALLOC(d, nv, int);
 
   // compute rownnz
   mju_zeroInt(rownnz, nv);
@@ -954,6 +987,19 @@ static void makeDofDofSparse(const mjModel* m, mjData* d,
     mjERROR("sum of rownnz different from expected");
   }
 
+  // find diagonal indices
+  for (int i = 0; i < nv; i++) {
+    int adr = rowadr[i];
+    int j = 0;
+    while (colind[adr + j] < i && j < rownnz[i]) {
+      j++;
+    }
+    if (colind[adr + j] != i) {
+      mjERROR("diagonal index not found");
+    }
+    diag[i] = j;
+  }
+
   mj_freeStack(d);
 }
 
@@ -998,7 +1044,7 @@ static void makeBSparse(const mjModel* m, mjData* d) {
 
   // allocate and clear incremental row counts
   mj_markStack(d);
-  int* cnt = mj_stackAllocInt(d, nbody);
+  int* cnt = mjSTACKALLOC(d, nbody, int);
   mju_zeroInt(cnt, nbody);
 
   // add subtree dofs to colind
@@ -1088,7 +1134,7 @@ static void copyM2Sparse(const mjModel* m, mjData* d, int* dst, const int* src,
   mj_markStack(d);
 
   // init remaining
-  int* remaining = mj_stackAllocInt(d, nv);
+  int* remaining = mjSTACKALLOC(d, nv, int);
   mju_copyInt(remaining, rownnz, nv);
 
   // copy data
@@ -1156,7 +1202,7 @@ static void makeDmap(const mjModel* m, mjData* d) {
   mj_markStack(d);
 
   // make mapM2D
-  int* M = mj_stackAllocInt(d, nM);
+  int* M = mjSTACKALLOC(d, nM, int);
   for (int i=0; i < nM; i++) M[i] = i;
   for (int i=0; i < nD; i++) d->mapM2D[i] = -1;
   copyM2Sparse(m, d, d->mapM2D, M, /*reduced=*/0);
@@ -1169,7 +1215,7 @@ static void makeDmap(const mjModel* m, mjData* d) {
   }
 
   // make mapD2M
-  int* D = mj_stackAllocInt(d, nD);
+  int* D = mjSTACKALLOC(d, nD, int);
   for (int i=0; i < nD; i++) D[i] = i;
   for (int i=0; i < nM; i++) d->mapD2M[i] = -1;
   copyD2MSparse(m, d, d->mapD2M, D);
@@ -1400,26 +1446,28 @@ mjData* mj_copyData(mjData* dest, const mjModel* m, const mjData* src) {
     #undef X
   }
 
-  // copy arena memory
-#undef MJ_D
-#define MJ_D(n) (src->n)
-#undef MJ_M
-#define MJ_M(n) (m->n)
-#define X(type, name, nr, nc)  \
-  if (src->name) { \
-    dest->name = (type*)((char*)dest->arena + PTRDIFF(src->name, src->arena)); \
-    ASAN_UNPOISON_MEMORY_REGION(dest->name, sizeof(type)*nr*nc); \
-    memcpy((char*)dest->name, (const char*)src->name, sizeof(type)*nr*nc); \
-  } else { \
-    dest->name = NULL; \
-  }
 
+  // copy arena memory
+  #undef MJ_D
+  #define MJ_D(n) (src->n)
+  #undef MJ_M
+  #define MJ_M(n) (m->n)
+
+  #define X(type, name, nr, nc)                                                  \
+    if (src->name) {                                                             \
+      dest->name = (type*)((char*)dest->arena + PTRDIFF(src->name, src->arena)); \
+      ASAN_UNPOISON_MEMORY_REGION(dest->name, sizeof(type) * nr * nc);           \
+      memcpy((char*)dest->name, (const char*)src->name, sizeof(type) * nr * nc); \
+    } else {                                                                     \
+      dest->name = NULL;                                                         \
+    }
   MJDATA_ARENA_POINTERS
-#undef X
-#undef MJ_M
-#define MJ_M(n) n
-#undef MJ_D
-#define MJ_D(n) n
+  #undef X
+
+  #undef MJ_M
+  #define MJ_M(n) n
+  #undef MJ_D
+  #define MJ_D(n) n
 
   // restore contact pointer
   dest->contact = dest->arena;
@@ -1542,7 +1590,8 @@ void* mj_arenaAllocByte(mjData* d, size_t bytes, size_t alignment) {
 
 // internal: allocate size bytes on the provided stack shard
 // declared inline so that modular arithmetic with specific alignments can be optimized out
-static inline void* stackallocinternal(mjData* d, mjStackInfo* stack_info, size_t size, size_t alignment) {
+static inline void* stackallocinternal(mjData* d, mjStackInfo* stack_info, size_t size,
+    size_t alignment, const char* caller, int line) {
   // return NULL if empty
   if (mjUNLIKELY(!size)) {
     return NULL;
@@ -1565,10 +1614,19 @@ static inline void* stackallocinternal(mjData* d, mjStackInfo* stack_info, size_
   size_t stack_available_bytes = stack_info->top - stack_info->limit;
   size_t stack_required_bytes = stack_info->top - new_top_ptr;
   if (mjUNLIKELY(stack_required_bytes > stack_available_bytes)) {
-    mju_error("mj_stackAlloc: insufficient memory: max = %zu, available = %zu, requested = %zu "
-              "(ne = %d, nf = %d, nefc = %d, ncon = %d)",
+    char info[1024];
+    if (caller) {
+      snprintf(info, sizeof(info), " at %s, line %d", caller, line);
+    } else {
+      info[0] = '\0';
+    }
+    mju_error("mj_stackAlloc: out of memory, stack overflow%s\n"
+              "  max = %zu, available = %zu, requested = %zu\n"
+              "  nefc = %d, ncon = %d",
+              info,
               stack_info->bottom - stack_info->limit, stack_available_bytes, stack_required_bytes,
-              d->ne, d->nf, d->nefc, d->ncon);
+              d->nefc, d->ncon);
+
   }
 
 #ifdef ADDRESS_SANITIZER
@@ -1603,20 +1661,20 @@ static inline void* stackallocinternal(mjData* d, mjStackInfo* stack_info, size_
 
 // internal: allocate size bytes in mjData
 // declared inline so that modular arithmetic with specific alignments can be optimized out
-static inline void* stackalloc(mjData* d, size_t size, size_t alignment) {
+static inline void* stackalloc(mjData* d, size_t size, size_t alignment,
+                               const char* caller, int line) {
+  // single threaded allocation
   if (!d->threadpool) {
     mjStackInfo stack_info = get_stack_info_from_data(d);
-
-    void* result = stackallocinternal(d, &stack_info, size, alignment);
-
+    void* result = stackallocinternal(d, &stack_info, size, alignment, caller, line);
     d->pstack = stack_info.bottom - stack_info.top;
-
     return result;
   }
 
+  // multi threaded allocation
   size_t thread_id = mju_threadPoolCurrentWorkerId((mjThreadPool*)d->threadpool);
   mjStackInfo* stack_info = mju_getStackInfoForThread(d, thread_id);
-  return stackallocinternal(d, stack_info, size, alignment);
+  return stackallocinternal(d, stack_info, size, alignment, caller, line);
 }
 
 
@@ -1628,7 +1686,7 @@ __attribute__((always_inline))
 static inline void markstackinternal(mjData* d, mjStackInfo* stack_info) {
   size_t top_old = stack_info->top;
   mjStackFrame* s =
-    (mjStackFrame*) stackallocinternal(d, stack_info, sizeof(mjStackFrame), _Alignof(mjStackFrame));
+    (mjStackFrame*) stackallocinternal(d, stack_info, sizeof(mjStackFrame), _Alignof(mjStackFrame), NULL, 0);
   s->pbase = stack_info->stack_base;
   s->pstack = top_old;
 #ifdef ADDRESS_SANITIZER
@@ -1714,9 +1772,31 @@ void mj__freeStack(mjData* d)
 
 
 
+// returns the number of bytes available on the stack
+size_t mj_stackBytesAvailable(mjData* d) {
+  if (!d->threadpool) {
+    mjStackInfo stack_info = get_stack_info_from_data(d);
+    return stack_info.top - stack_info.limit;
+  } else {
+    size_t thread_id = mju_threadPoolCurrentWorkerId((mjThreadPool*)d->threadpool);
+    mjStackInfo* stack_info = mju_getStackInfoForThread(d, thread_id);
+    return stack_info->top - stack_info->limit;
+  }
+}
+
+
+
 // allocate bytes on the stack
 void* mj_stackAllocByte(mjData* d, size_t bytes, size_t alignment) {
-  return stackalloc(d, bytes, alignment);
+  return stackalloc(d, bytes, alignment, NULL, 0);
+}
+
+
+
+// allocate bytes on the stack, with caller information
+void* mj_stackAllocInfo(mjData* d, size_t bytes, size_t alignment,
+                        const char* caller, int line) {
+  return stackalloc(d, bytes, alignment, caller, line);
 }
 
 
@@ -1726,7 +1806,7 @@ mjtNum* mj_stackAllocNum(mjData* d, size_t size) {
   if (mjUNLIKELY(size >= SIZE_MAX / sizeof(mjtNum))) {
     mjERROR("requested size is too large (more than 2^64 bytes).");
   }
-  return (mjtNum*) stackalloc(d, size * sizeof(mjtNum), _Alignof(mjtNum));
+  return (mjtNum*) stackalloc(d, size * sizeof(mjtNum), _Alignof(mjtNum), NULL, 0);
 }
 
 
@@ -1736,7 +1816,7 @@ int* mj_stackAllocInt(mjData* d, size_t size) {
   if (mjUNLIKELY(size >= SIZE_MAX / sizeof(int))) {
     mjERROR("requested size is too large (more than 2^64 bytes).");
   }
-  return (int*) stackalloc(d, size * sizeof(int), _Alignof(int));
+  return (int*) stackalloc(d, size * sizeof(int), _Alignof(int), NULL, 0);
 }
 
 
@@ -1800,7 +1880,7 @@ static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
   d->nf = 0;
   d->nl = 0;
   d->nefc = 0;
-  d->nnzJ = 0;
+  d->nJ = 0;
   d->nisland = 0;
 
   // clear global properties
@@ -1842,9 +1922,6 @@ static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
   mju_zero(d->mocap_pos, 3*m->nmocap);
   mju_zero(d->mocap_quat, 4*m->nmocap);
 
-  // zero out actuator_moment, mj_transmission touches it selectively
-  mju_zero(d->actuator_moment, m->nv*m->nu);
-
   // copy qpos0 from model
   if (m->qpos0) {
     memcpy(d->qpos, m->qpos0, m->nq*sizeof(mjtNum));
@@ -1869,14 +1946,14 @@ static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
   // construct sparse matrix representations
   if (m->body_dofadr) {
     // make D
-    makeDofDofSparse(m, d, d->D_rownnz, d->D_rowadr, d->D_colind, /*reduced=*/0);
+    makeDofDofSparse(m, d, d->D_rownnz, d->D_rowadr, d->D_diag, d->D_colind, /*reduced=*/0);
 
     // make B, check D and B
     makeBSparse(m, d);
     checkDBSparse(m, d);
 
     // make C
-    makeDofDofSparse(m, d, d->C_rownnz, d->C_rowadr, d->C_colind, /*reduced=*/1);
+    makeDofDofSparse(m, d, d->C_rownnz, d->C_rowadr, d->C_diag, d->C_colind, /*reduced=*/1);
     makeDmap(m, d);
   }
 

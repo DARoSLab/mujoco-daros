@@ -15,6 +15,7 @@
 // Tests for engine/engine_core_smooth.c.
 
 #include "src/engine/engine_core_smooth.h"
+#include "src/engine/engine_util_sparse.h"
 
 #include <string>
 #include <string_view>
@@ -31,6 +32,7 @@
 namespace mujoco {
 namespace {
 
+using ::std::vector;
 using ::testing::Each;
 using ::testing::ElementsAre;
 using ::testing::Eq;
@@ -39,9 +41,6 @@ using ::testing::DoubleNear;
 using ::testing::NotNull;
 using CoreSmoothTest = MujocoTest;
 
-std::vector<mjtNum> GetVector(const mjtNum* array, int length) {
-  return std::vector<mjtNum>(array, array + length);
-}
 
 constexpr bool EndsWith(std::string_view str, std::string_view suffix) {
   return str.size() >= suffix.size() &&
@@ -104,7 +103,7 @@ TEST_F(CoreSmoothTest, MjKinematicsWorldXipos) {
 
   mj_resetDataDebug(model, data, 'd');
   mj_kinematics(model, data);
-  EXPECT_THAT(GetVector(&data->xipos[0], 3), ElementsAre(0, 0, 0));
+  EXPECT_THAT(AsVector(&data->xipos[0], 3), ElementsAre(0, 0, 0));
 
   mj_deleteData(data);
   mj_deleteModel(model);
@@ -241,14 +240,48 @@ TEST_F(CoreSmoothTest, WeldRatioTorqueFree) {
 
 TEST_F(CoreSmoothTest, WeldRatioForceSlideRotated) {
   constexpr char kModelFilePath[] =
-      "engine/testdata/core_smooth/rne_post/weld/tfratio0_force_slide_rotated.xml";
+      "engine/testdata/core_smooth/rne_post/weld/"
+      "tfratio0_force_slide_rotated.xml";
   TestConnect(kModelFilePath);
 }
 
 TEST_F(CoreSmoothTest, WeldRatioMultipleConstraints) {
   constexpr char kModelFilePath[] =
-      "engine/testdata/core_smooth/rne_post/weld/tfratio0_multiple_constraints.xml";
+      "engine/testdata/core_smooth/rne_post/weld/"
+      "tfratio0_multiple_constraints.xml";
   TestConnect(kModelFilePath);
+}
+
+TEST_F(CoreSmoothTest, EqualityBodySite) {
+  const std::string xml_path =
+      GetTestDataFilePath("engine/testdata/equality_site_body_compare.xml");
+
+  mjModel* model = mj_loadXML(xml_path.c_str(), nullptr, nullptr, 0);
+  mjData* data = mj_makeData(model);
+
+  // simulate, get sensordata
+  while (data->time < 0.1) {
+    mj_step(model, data);
+  }
+  vector<mjtNum> sdata = AsVector(data->sensordata, model->nsensordata);
+
+  // reset
+  mj_resetData(model, data);
+
+  // turn site-defined equalities off, equivalent body-defined equalities on
+  for (int e=0; e < 4; e++) data->eq_active[e] = 1 - data->eq_active[e];
+
+  // simulate again, get sensordata
+  while (data->time < 0.1) {
+    mj_step(model, data);
+  }
+
+  // compare
+  EXPECT_THAT(AsVector(data->sensordata, model->nsensordata),
+              Pointwise(DoubleNear(1e-8), sdata));
+
+  mj_deleteData(data);
+  mj_deleteModel(model);
 }
 
 // --------------------------- site actuators ----------------------------------
@@ -372,6 +405,80 @@ TEST_F(CoreSmoothTest, SolveMIsland) {
   mju_free(vec);
   mj_deleteData(data);
   mj_deleteModel(model);
+}
+
+TEST_F(CoreSmoothTest, SolveLD2) {
+  static constexpr char xml[] = R"(
+  <mujoco>
+    <default>
+      <geom type="capsule" size="0.1"/>
+      <joint axis="0 1 0"/>
+    </default>
+
+    <worldbody>
+      <body>
+        <geom fromto="0 0 0 0 0 1"/>
+        <joint/>
+        <body pos="0 0 1">
+          <geom fromto="0 0 0 1 0 1"/>
+          <joint/>
+        </body>
+        <body pos="0 0 1">
+          <geom fromto="0 0 0 -1 0 1"/>
+          <joint/>
+          <body pos="-1 0 1">
+            <geom fromto="0 0 0 1 0 1"/>
+            <joint/>
+          </body>
+          <body pos="-1 0 1">
+            <geom fromto="0 0 0 -1 0 1"/>
+            <joint/>
+          </body>
+        </body>
+      </body>
+    </worldbody>
+  </mujoco>
+  )";
+  mjModel* m = LoadModelFromString(xml);
+  mjData* d = mj_makeData(m);
+  mj_forward(m, d);
+
+  int nv = m->nv;
+  int nC = m->nC;
+
+  // copy LD into LDs: CSR format
+  vector<mjtNum> LDs(nC);
+  for (int i=0; i < nC; i++) {
+    LDs[i] = d->qLD[d->mapM2C[i]];
+  }
+
+  // compare LD and LDs densified matrices
+  vector<mjtNum> LDdense(nv*nv);
+  mju_sparse2dense(LDdense.data(), LDs.data(), nv, nv,
+                   d->C_rownnz, d->C_rowadr, d->C_colind);
+  vector<mjtNum> LDdense2(nv*nv);
+  mj_fullM(m, LDdense2.data(), d->qLD);
+
+  // expect dense matrices to match exactly
+  for (int i=0; i < nv*nv; i++) EXPECT_EQ(LDdense[i], LDdense2[i]);
+
+  // compare LD and LDs vector solve
+  vector<mjtNum> vec(nv);
+  vector<mjtNum> vec2(nv);
+  for (int i=0; i < nv; i++) vec[i] = vec2[i] = 20 + 30*i;
+  for (int i=0; i < nv; i+=2) vec[i] = vec2[i] = 0;
+
+  mj_solveLD(m, vec.data(), 1, d->qLD, d->qLDiagInv);
+  mj_solveLDs(vec2.data(), LDs.data(), d->qLDiagInv, nv,
+              d->C_rownnz, d->C_rowadr, d->C_diag, d->C_colind);
+
+  // expect vectors to match up to floating point precision
+  for (int i=0; i < nv; i++) {
+    EXPECT_FLOAT_EQ(vec[i], vec2[i]);
+  }
+
+  mj_deleteData(d);
+  mj_deleteModel(m);
 }
 
 }  // namespace

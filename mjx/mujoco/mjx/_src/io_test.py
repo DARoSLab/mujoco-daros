@@ -20,6 +20,7 @@ import jax
 from jax import numpy as jp
 import mujoco
 from mujoco import mjx
+from mujoco.mjx._src.types import ConeType
 import numpy as np
 
 
@@ -91,12 +92,11 @@ _MULTIPLE_CONSTRAINTS = """
 class ModelIOTest(parameterized.TestCase):
   """IO tests for mjx.Model."""
 
-  @parameterized.parameters(
-      _MULTIPLE_CONVEX_OBJECTS, _MULTIPLE_CONSTRAINTS
-  )
+  @parameterized.parameters(_MULTIPLE_CONVEX_OBJECTS, _MULTIPLE_CONSTRAINTS)
   def test_put_model(self, xml):
     m = mujoco.MjModel.from_xml_string(xml)
     mx = mjx.put_model(m)
+
     def assert_not_weak_type(x):
       if isinstance(x, jax.Array):
         assert not x.weak_type
@@ -422,6 +422,26 @@ class DataIOTest(parameterized.TestCase):
     np.testing.assert_allclose(d_2.efc_aref, d.efc_aref)
     np.testing.assert_allclose(d_2.contact.efc_address, d.contact.efc_address)
 
+  def test_get_data_runs(self):
+    xml = """
+      <mujoco>
+        <compiler autolimits="true"/>
+        <worldbody>
+          <body name="box">
+            <joint name="slide1" type="slide" axis="1 0 0" />
+            <geom type="box" size=".05 .05 .05" mass="1"/>
+          </body>
+        </worldbody>
+        <actuator>
+          <motor joint="slide1"/>
+        </actuator>
+      </mujoco>
+    """
+    m = mujoco.MjModel.from_xml_string(xml)
+    d = mujoco.MjData(m)
+    dx = mjx.put_data(m, d)
+    mjx.get_data(m, dx)
+
   def test_get_data_batched(self):
     """Test that get_data makes correct List[MjData] for batched Data."""
 
@@ -474,6 +494,56 @@ class DataIOTest(parameterized.TestCase):
     # placing an MjData onto device should yield the same treedef mjx.Data as
     # calling make_data.  they should be interchangeable for jax functions:
     step_fn_jit(mjx.make_data(m))
+
+  def test_contact_elliptic_condim1(self):
+    """Test that condim=1 with ConeType.ELLIPTIC is not implemented."""
+    m = mujoco.MjModel.from_xml_string("""
+      <mujoco>
+        <worldbody>
+          <geom size="0 0 1e-5" type="plane" condim="1"/>
+          <body>
+            <freejoint/>
+            <geom size="0.1" condim="1"/>
+          </body>
+        </worldbody>
+      </mujoco>
+    """)
+    m.opt.cone = ConeType.ELLIPTIC
+    with self.assertRaises(NotImplementedError):
+      mjx.make_data(m)
+
+  @parameterized.product(
+      sensor=['accelerometer', 'force', 'torque'], equality=['connect', 'weld']
+  )
+  def test_sensor_constraint_compatibility(self, sensor, equality):
+    """Test unsupported sensor and equality constraint combinations."""
+    equality_constraint = f'{equality} body1="body1" body2="body2"'
+    if equality == 'connect':
+      equality_constraint += ' anchor="0 0 0"'
+    m = mujoco.MjModel.from_xml_string(f"""
+        <mujoco>
+          <worldbody>
+            <body name="body1">
+              <freejoint/>
+              <geom size="0.1"/>
+              <site name="site1"/>
+            </body>
+            <body name="body2">
+              <freejoint/>
+              <geom size="0.1"/>
+            </body>
+          </worldbody>
+          <equality>
+            <{equality_constraint}/>
+          </equality>
+          <sensor>
+            <{sensor} site="site1"/>
+          </sensor>
+        </mujoco>
+      """)
+    with self.assertRaises(NotImplementedError):
+      mjx.put_model(m)
+
 
 if __name__ == '__main__':
   absltest.main()

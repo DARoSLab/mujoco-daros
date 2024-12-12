@@ -254,7 +254,7 @@ mjtNum mjv_frustumHeight(const mjvScene* scn) {
 
 
 // rotate 3D vec in horizontal plane by angle between (0,1) and (forward_x,forward_y)
-MJAPI void mjv_alignToCamera(mjtNum* res, const mjtNum* vec, const mjtNum* forward) {
+void mjv_alignToCamera(mjtNum* res, const mjtNum* vec, const mjtNum* forward) {
   mjtNum xaxis[2], yaxis[2];
 
   // forward-aligned y-axis
@@ -539,8 +539,8 @@ void mjv_initPerturb(const mjModel* m, mjData* d, const mjvScene* scn, mjvPertur
   int sel = pert->select;
   mjtNum headpos[3], forward[3], dif[3];
 
-  mjtNum* jac = mj_stackAllocNum(d, 3*nv);
-  mjtNum* jacM2 = mj_stackAllocNum(d, 3*nv);
+  mjtNum* jac = mjSTACKALLOC(d, 3*nv, mjtNum);
+  mjtNum* jacM2 = mjSTACKALLOC(d, 3*nv, mjtNum);
 
   // invalid selected body: return
   if (sel <= 0 || sel >= m->nbody) {

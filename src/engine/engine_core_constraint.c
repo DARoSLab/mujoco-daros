@@ -485,14 +485,14 @@ void mj_instantiateEquality(const mjModel* m, mjData* d) {
   mj_markStack(d);
 
   // allocate space
-  jac[0] = mj_stackAllocNum(d, 6*nv);
-  jac[1] = mj_stackAllocNum(d, 6*nv);
-  jacdif = mj_stackAllocNum(d, 6*nv);
+  jac[0] = mjSTACKALLOC(d, 6*nv, mjtNum);
+  jac[1] = mjSTACKALLOC(d, 6*nv, mjtNum);
+  jacdif = mjSTACKALLOC(d, 6*nv, mjtNum);
   if (issparse) {
-    chain = mj_stackAllocInt(d, nv);
-    chain2 = mj_stackAllocInt(d, nv);
-    buf_ind = mj_stackAllocInt(d, nv);
-    sparse_buf = mj_stackAllocNum(d, nv);
+    chain = mjSTACKALLOC(d, nv, int);
+    chain2 = mjSTACKALLOC(d, nv, int);
+    buf_ind = mjSTACKALLOC(d, nv, int);
+    sparse_buf = mjSTACKALLOC(d, nv, mjtNum);
   }
 
   // find active equality constraints
@@ -756,7 +756,7 @@ void mj_instantiateFriction(const mjModel* m, mjData* d) {
   mj_markStack(d);
 
   // allocate Jacobian
-  jac = mj_stackAllocNum(d, nv);
+  jac = mjSTACKALLOC(d, nv, mjtNum);
 
   // find frictional dofs
   for (int i=0; i < nv; i++) {
@@ -813,7 +813,7 @@ void mj_instantiateLimit(const mjModel* m, mjData* d) {
   mj_markStack(d);
 
   // allocate Jacobian
-  jac = mj_stackAllocNum(d, nv);
+  jac = mjSTACKALLOC(d, nv, mjtNum);
 
   // find joint limits
   for (int i=0; i < m->njnt; i++) {
@@ -953,16 +953,16 @@ void mj_instantiateContact(const mjModel* m, mjData* d) {
   mj_markStack(d);
 
   // allocate Jacobian
-  jac = mj_stackAllocNum(d, 6*nv);
-  jacdif = mj_stackAllocNum(d, 6*nv);
+  jac = mjSTACKALLOC(d, 6*nv, mjtNum);
+  jacdif = mjSTACKALLOC(d, 6*nv, mjtNum);
   jacdifp = jacdif;
   jacdifr = jacdif + 3*nv;
-  jac1p = mj_stackAllocNum(d, 3*nv);
-  jac2p = mj_stackAllocNum(d, 3*nv);
-  jac1r = mj_stackAllocNum(d, 3*nv);
-  jac2r = mj_stackAllocNum(d, 3*nv);
+  jac1p = mjSTACKALLOC(d, 3*nv, mjtNum);
+  jac2p = mjSTACKALLOC(d, 3*nv, mjtNum);
+  jac1r = mjSTACKALLOC(d, 3*nv, mjtNum);
+  jac2r = mjSTACKALLOC(d, 3*nv, mjtNum);
   if (issparse) {
-    chain = mj_stackAllocInt(d, nv);
+    chain = mjSTACKALLOC(d, nv, int);
   }
 
   // find contacts to be included
@@ -1117,16 +1117,30 @@ void mj_diagApprox(const mjModel* m, mjData* d) {
       // process according to equality-constraint type
       switch (m->eq_type[id]) {
       case mjEQ_CONNECT:
-        // body translation
         b1 = m->eq_obj1id[id];
         b2 = m->eq_obj2id[id];
+
+        // get body ids if using site semantics
+        if (m->eq_objtype[id] == mjOBJ_SITE) {
+          b1 = m->site_bodyid[b1];
+          b2 = m->site_bodyid[b2];
+        }
+
+        // body translation
         dA[i] = m->body_invweight0[2*b1] + m->body_invweight0[2*b2];
         break;
 
       case mjEQ_WELD:  // distinguish translation and rotation inertia
-        // body translation or rotation depending on weldcnt
         b1 = m->eq_obj1id[id];
         b2 = m->eq_obj2id[id];
+
+        // get body ids if using site semantics
+        if (m->eq_objtype[id] == mjOBJ_SITE) {
+          b1 = m->site_bodyid[b1];
+          b2 = m->site_bodyid[b2];
+        }
+
+        // body translation or rotation depending on weldcnt
         dA[i] = m->body_invweight0[2*b1 + (weldcnt > 2)] +
                 m->body_invweight0[2*b2 + (weldcnt > 2)];
         weldcnt = (weldcnt + 1) % 6;
@@ -1575,8 +1589,8 @@ static int mj_jacSumCount(const mjModel* m, mjData* d, int* chain,
   int nv = m->nv, NV;
 
   mj_markStack(d);
-  int* bodychain = mj_stackAllocInt(d, nv);
-  int* tempchain = mj_stackAllocInt(d, nv);
+  int* bodychain = mjSTACKALLOC(d, nv, int);
+  int* tempchain = mjSTACKALLOC(d, nv, int);
 
   // set first
   NV = mj_bodyChain(m, body[0], chain);
@@ -1629,8 +1643,8 @@ static int mj_ne(const mjModel* m, mjData* d, int* nnz) {
   mj_markStack(d);
 
   if (nnz) {
-    chain = mj_stackAllocInt(d, nv);
-    chain2 = mj_stackAllocInt(d, nv);
+    chain = mjSTACKALLOC(d, nv, int);
+    chain2 = mjSTACKALLOC(d, nv, int);
   }
 
   // find active equality constraints
@@ -1650,6 +1664,12 @@ static int mj_ne(const mjModel* m, mjData* d, int* nnz) {
           break;
         }
 
+        // get body ids if using site semantics
+        if (m->eq_objtype[i] == mjOBJ_SITE) {
+          id[0] = m->site_bodyid[id[0]];
+          id[1] = m->site_bodyid[id[1]];
+        }
+
         NV = mj_jacDifPairCount(m, chain, id[1], id[0], issparse);
         break;
 
@@ -1657,6 +1677,12 @@ static int mj_ne(const mjModel* m, mjData* d, int* nnz) {
         size = 6;
         if (!nnz) {
           break;
+        }
+
+        // get body ids if using site semantics
+        if (m->eq_objtype[i] == mjOBJ_SITE) {
+          id[0] = m->site_bodyid[id[0]];
+          id[1] = m->site_bodyid[id[1]];
         }
 
         NV = mj_jacDifPairCount(m, chain, id[1], id[0], issparse);
@@ -1844,7 +1870,7 @@ static int mj_nc(const mjModel* m, mjData* d, int* nnz) {
   }
 
   mj_markStack(d);
-  int *chain = mj_stackAllocInt(d, m->nv);
+  int *chain = mjSTACKALLOC(d, m->nv, int);
 
   for (int i=0; i < ncon; i++) {
     mjContact* con = d->contact + i;
@@ -1917,7 +1943,7 @@ static int mj_nc(const mjModel* m, mjData* d, int* nnz) {
 // driver: call all functions above
 void mj_makeConstraint(const mjModel* m, mjData* d) {
   // clear sizes
-  d->ne = d->nf = d->nl = d->nefc = d->nnzJ = 0;
+  d->ne = d->nf = d->nl = d->nefc = d->nJ = 0;
 
   // disabled or Jacobian not allocated: return
   if (mjDISABLED(mjDSBL_CONSTRAINT)) {
@@ -1925,13 +1951,13 @@ void mj_makeConstraint(const mjModel* m, mjData* d) {
   }
 
   // precount sizes for constraint Jacobian matrices
-  int *nnz = mj_isSparse(m) ? &(d->nnzJ) : NULL;
+  int *nnz = mj_isSparse(m) ? &(d->nJ) : NULL;
   int ne_allocated = mj_ne(m, d, nnz);
   int nf_allocated = mj_nf(m, d, nnz);
   int nl_allocated = mj_nl(m, d, nnz);
   int nefc_allocated = ne_allocated + nf_allocated + nl_allocated + mj_nc(m, d, nnz);
   if (!mj_isSparse(m)) {
-    d->nnzJ = nefc_allocated * m->nv;
+    d->nJ = nefc_allocated * m->nv;
   }
   d->nefc = nefc_allocated;
 
@@ -1972,12 +1998,11 @@ void mj_makeConstraint(const mjModel* m, mjData* d) {
       mjERROR("nefc mis-allocation: found nefc=%d but allocated %d", d->nefc, nefc_allocated);
     }
 
-    // check that nnzJ was computed correctly
+    // check that nJ was computed correctly
     if (d->nefc > 0) {
-      int nnzJ = d->efc_J_rownnz[d->nefc - 1] + d->efc_J_rowadr[d->nefc - 1];
-      if (d->nnzJ != nnzJ) {
-        mjERROR("constraint Jacobian mis-allocation: found nnzJ=%d but allocated %d",
-                nnzJ, d->nnzJ);
+      int nJ = d->efc_J_rownnz[d->nefc - 1] + d->efc_J_rowadr[d->nefc - 1];
+      if (d->nJ != nJ) {
+        mjERROR("constraint Jacobian mis-allocation: found nJ=%d but allocated %d", nJ, d->nJ);
       }
     }
   } else if (d->nefc > nefc_allocated) {
@@ -2043,19 +2068,19 @@ void mj_projectConstraint(const mjModel* m, mjData* d) {
   mj_markStack(d);
 
   // space for backsubM2(J')' and its traspose
-  mjtNum* JM2 = mj_stackAllocNum(d, nefc*nv);
-  mjtNum* JM2T = mj_stackAllocNum(d, nv*nefc);
+  mjtNum* JM2 = mjSTACKALLOC(d, nefc*nv, mjtNum);
+  mjtNum* JM2T = mjSTACKALLOC(d, nv*nefc, mjtNum);
 
   // sparse
   if (mj_isSparse(m)) {
     // space for JM2 and JM2T indices
-    int* rownnz = mj_stackAllocInt(d, nefc);
-    int* rowadr = mj_stackAllocInt(d, nefc);
-    int* colind = mj_stackAllocInt(d, nefc*nv);
-    int* rowsuper = mj_stackAllocInt(d, nefc);
-    int* rownnzT = mj_stackAllocInt(d, nv);
-    int* rowadrT = mj_stackAllocInt(d, nv);
-    int* colindT = mj_stackAllocInt(d, nv*nefc);
+    int* rownnz = mjSTACKALLOC(d, nefc, int);
+    int* rowadr = mjSTACKALLOC(d, nefc, int);
+    int* colind = mjSTACKALLOC(d, nefc*nv, int);
+    int* rowsuper = mjSTACKALLOC(d, nefc, int);
+    int* rownnzT = mjSTACKALLOC(d, nv, int);
+    int* rowadrT = mjSTACKALLOC(d, nv, int);
+    int* colindT = mjSTACKALLOC(d, nv*nefc, int);
 
     // construct JM2 = backsubM2(J')' by rows
     for (int r=0; r < nefc; r++) {

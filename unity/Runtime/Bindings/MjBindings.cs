@@ -109,7 +109,7 @@ public const int mjMAXLINEPNT = 1000;
 public const int mjMAXPLANEGRID = 200;
 public const bool THIRD_PARTY_MUJOCO_MJXMACRO_H_ = true;
 public const bool THIRD_PARTY_MUJOCO_MUJOCO_H_ = true;
-public const int mjVERSION_HEADER = 325;
+public const int mjVERSION_HEADER = 327;
 
 
 // ------------------------------------Enums------------------------------------
@@ -451,8 +451,13 @@ public enum mjtFont : int{
   mjFONT_BIG = 2,
 }
 public enum mjtGeomInertia : int{
-  mjINERTIA_VOLUME = 1,
-  mjINERTIA_SHELL = 2,
+  mjINERTIA_VOLUME = 0,
+  mjINERTIA_SHELL = 1,
+}
+public enum mjtMeshInertia : int{
+  mjINERTIA_CONVEX = 0,
+  mjINERTIA_EXACT = 1,
+  mjINERTIA_LEGACY = 2,
 }
 public enum mjtBuiltin : int{
   mjBUILTIN_NONE = 0,
@@ -4846,7 +4851,7 @@ public unsafe struct mjData_ {
   public int nf;
   public int nl;
   public int nefc;
-  public int nnzJ;
+  public int nJ;
   public int nisland;
   public double time;
   public fixed double energy[2];
@@ -4904,6 +4909,9 @@ public unsafe struct mjData_ {
   public int* wrap_obj;
   public double* wrap_xpos;
   public double* actuator_length;
+  public int* moment_rownnz;
+  public int* moment_rowadr;
+  public int* moment_colind;
   public double* actuator_moment;
   public double* crb;
   public double* qM;
@@ -4932,10 +4940,12 @@ public unsafe struct mjData_ {
   public int* B_colind;
   public int* C_rownnz;
   public int* C_rowadr;
+  public int* C_diag;
   public int* C_colind;
   public int* mapM2C;
   public int* D_rownnz;
   public int* D_rowadr;
+  public int* D_diag;
   public int* D_colind;
   public int* mapM2D;
   public int* mapD2M;
@@ -5230,12 +5240,13 @@ public unsafe struct mjModel_ {
   public int nuser_actuator;
   public int nuser_sensor;
   public int nnames;
-  public int nnames_map;
   public int npaths;
+  public int nnames_map;
   public int nM;
   public int nB;
   public int nC;
   public int nD;
+  public int nJmom;
   public int ntree;
   public int ngravcomp;
   public int nemax;
@@ -5420,7 +5431,7 @@ public unsafe struct mjModel_ {
   public int* flex_shell;
   public int* flex_evpair;
   public double* flex_vert;
-  public double* flex_xvert0;
+  public double* flex_vert0;
   public double* flexedge_length0;
   public double* flexedge_invweight0;
   public double* flex_radius;
@@ -5673,7 +5684,7 @@ public unsafe struct mjrContext_ {
   public fixed uint auxColor_r[10];
   public fixed int mat_texid[10000];
   public fixed int mat_texuniform[1000];
-  public fixed int mat_texrepeat[2000];
+  public fixed float mat_texrepeat[2000];
   public int ntexture;
   public fixed int textureType[1000];
   public fixed uint texture[1000];
@@ -5706,6 +5717,25 @@ public unsafe struct mjrContext_ {
   public int currentBuffer;
   public int readPixelFormat;
   public int readDepthMap;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public unsafe struct mjsCompiler_ {
+  public byte autolimits;
+  public double boundmass;
+  public double boundinertia;
+  public double settotalmass;
+  public byte balanceinertia;
+  public byte fitaabb;
+  public byte degree;
+  public fixed sbyte eulerseq[3];
+  public byte discardvisual;
+  public byte usethread;
+  public byte fusestatic;
+  public int inertiafromgeom;
+  public fixed int inertiagrouprange[2];
+  public int alignfree;
+  public mjLROpt_ LRopt;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -6895,9 +6925,6 @@ public static unsafe extern void mjv_defaultFigure(mjvFigure_* fig);
 public static unsafe extern void mjv_initGeom(mjvGeom_* geom, int type, double* size, double* pos, double* mat, float* rgba);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
-public static unsafe extern void mjv_makeConnector(mjvGeom_* geom, int type, double width, double a0, double a1, double a2, double b0, double b1, double b2);
-
-[DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
 public static unsafe extern void mjv_connector(mjvGeom_* geom, int type, double width, double* from, double* to);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
@@ -6914,6 +6941,9 @@ public static unsafe extern void mjv_updateScene(mjModel_* m, mjData_* d, mjvOpt
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
 public static unsafe extern int mjv_updateSceneFromState(mjvSceneState_* scnstate, mjvOption_* opt, mjvPerturb_* pert, mjvCamera_* cam, int catmask, mjvScene_* scn);
+
+[DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
+public static unsafe extern void mjv_copyModel(mjModel_* dest, mjModel_* src);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
 public static unsafe extern void mjv_defaultSceneState(mjvSceneState_* scnstate);
@@ -7114,12 +7144,6 @@ public static unsafe extern void mju_mulMatVec3(double* res, double* mat, double
 public static unsafe extern void mju_mulMatTVec3(double* res, double* mat, double* vec);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
-public static unsafe extern void mju_rotVecMat(double* res, double* vec, double* mat);
-
-[DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
-public static unsafe extern void mju_rotVecMatT(double* res, double* vec, double* mat);
-
-[DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
 public static unsafe extern void mju_cross(double* res, double* a, double* b);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
@@ -7213,6 +7237,12 @@ public static unsafe extern void mju_sqrMatTD(double* res, double* mat, double* 
 public static unsafe extern void mju_transformSpatial(double* res, double* vec, int flg_force, double* newpos, double* oldpos, double* rotnew2old);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
+public static unsafe extern int mju_dense2sparse(double* res, double* mat, int nr, int nc, int* rownnz, int* rowadr, int* colind, int nnz);
+
+[DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
+public static unsafe extern void mju_sparse2dense(double* res, double* mat, int nr, int nc, int* rownnz, int* rowadr, int* colind);
+
+[DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
 public static unsafe extern void mju_rotVecQuat(double* res, double* vec, double* quat);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
@@ -7247,6 +7277,9 @@ public static unsafe extern void mju_quatIntegrate(double* quat, double* vel, do
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
 public static unsafe extern void mju_quatZ2Vec(double* quat, double* vec);
+
+[DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
+public static unsafe extern int mju_mat2Rot(double* quat, double* mat);
 
 [DllImport("mujoco", CallingConvention = CallingConvention.Cdecl)]
 public static unsafe extern void mju_euler2Quat(double* quat, double* euler, [MarshalAs(UnmanagedType.LPStr)]string seq);
