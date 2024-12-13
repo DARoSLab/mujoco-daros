@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_malloc_internal.a CMakeFiles/absl_malloc_internal.dir/internal/low_level_alloc.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_malloc_internal.a

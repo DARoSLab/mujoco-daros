@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/CMakeFiles/qhull-populate"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/CMakeFiles/qhull-populate.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/CMakeFiles/qhull-populate-complete.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/qhull-populate-prefix/src/qhull-populate-stamp/qhull-populate-build.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/qhull-populate-prefix/src/qhull-populate-stamp/qhull-populate-configure.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/qhull-populate-prefix/src/qhull-populate-stamp/qhull-populate-download.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/qhull-populate-prefix/src/qhull-populate-stamp/qhull-populate-install.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/qhull-populate-prefix/src/qhull-populate-stamp/qhull-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/qhull-populate-prefix/src/qhull-populate-stamp/qhull-populate-patch.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/qhull-subbuild/qhull-populate-prefix/src/qhull-populate-stamp/qhull-populate-test.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"qhull-populate"
+		],
+		"name" : "qhull-populate"
+	}
+}

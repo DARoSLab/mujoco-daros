@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -g -fuse-ld=lld -Wl,--gc-sections -shared -Wl,-soname,libelasticity.so -o ../../lib/libelasticity.so CMakeFiles/elasticity.dir/cable.cc.o CMakeFiles/elasticity.dir/elasticity.cc.o CMakeFiles/elasticity.dir/register.cc.o CMakeFiles/elasticity.dir/shell.cc.o  -Wl,-rpath,/home/qh/Desktop/mujoco-daros/lib ../../lib/libmujoco.so.3.2.5 

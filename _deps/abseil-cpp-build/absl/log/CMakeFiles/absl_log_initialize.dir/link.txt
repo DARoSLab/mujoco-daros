@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_log_initialize.a CMakeFiles/absl_log_initialize.dir/initialize.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_log_initialize.a

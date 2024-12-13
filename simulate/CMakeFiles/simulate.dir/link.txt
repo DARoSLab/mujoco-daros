@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -fuse-ld=lld -Wl,--gc-sections CMakeFiles/simulate.dir/main.cc.o -o ../bin/simulate  -Wl,-rpath,"\$ORIGIN/../lib" ../lib/libsimulate.a ../lib/libglfw3.a ../lib/liblodepng.a ../lib/libmujoco.so.3.2.5 /usr/lib/x86_64-linux-gnu/librt.a -lm -ldl /usr/lib/x86_64-linux-gnu/libX11.so 

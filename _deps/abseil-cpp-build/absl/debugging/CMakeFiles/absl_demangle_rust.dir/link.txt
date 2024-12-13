@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_demangle_rust.a CMakeFiles/absl_demangle_rust.dir/internal/demangle_rust.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_demangle_rust.a

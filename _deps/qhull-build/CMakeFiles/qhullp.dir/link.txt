@@ -1,0 +1,1 @@
+/usr/bin/cc -g -rdynamic CMakeFiles/qhullp.dir/src/qhull/unix.c.o -o ../../bin/qhullp  -Wl,-rpath,/home/qh/Desktop/mujoco-daros/lib ../../lib/libqhull_pd.so.8.1-alpha1 -lm 

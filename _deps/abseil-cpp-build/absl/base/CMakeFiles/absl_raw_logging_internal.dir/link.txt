@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_raw_logging_internal.a CMakeFiles/absl_raw_logging_internal.dir/internal/raw_logging.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_raw_logging_internal.a

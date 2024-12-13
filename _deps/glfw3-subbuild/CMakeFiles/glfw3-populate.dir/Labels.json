@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/CMakeFiles/glfw3-populate"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/CMakeFiles/glfw3-populate.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/CMakeFiles/glfw3-populate-complete.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-build.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-configure.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-download.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-install.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-patch.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-test.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"glfw3-populate"
+		],
+		"name" : "glfw3-populate"
+	}
+}

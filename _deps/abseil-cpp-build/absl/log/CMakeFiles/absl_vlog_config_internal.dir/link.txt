@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_vlog_config_internal.a CMakeFiles/absl_vlog_config_internal.dir/internal/vlog_config.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_vlog_config_internal.a

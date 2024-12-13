@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_civil_time.a CMakeFiles/absl_civil_time.dir/internal/cctz/src/civil_time_detail.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_civil_time.a

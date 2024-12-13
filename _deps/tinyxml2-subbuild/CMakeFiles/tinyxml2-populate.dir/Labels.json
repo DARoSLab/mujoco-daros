@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/CMakeFiles/tinyxml2-populate"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/CMakeFiles/tinyxml2-populate.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/CMakeFiles/tinyxml2-populate-complete.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/tinyxml2-populate-prefix/src/tinyxml2-populate-stamp/tinyxml2-populate-build.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/tinyxml2-populate-prefix/src/tinyxml2-populate-stamp/tinyxml2-populate-configure.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/tinyxml2-populate-prefix/src/tinyxml2-populate-stamp/tinyxml2-populate-download.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/tinyxml2-populate-prefix/src/tinyxml2-populate-stamp/tinyxml2-populate-install.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/tinyxml2-populate-prefix/src/tinyxml2-populate-stamp/tinyxml2-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/tinyxml2-populate-prefix/src/tinyxml2-populate-stamp/tinyxml2-populate-patch.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyxml2-subbuild/tinyxml2-populate-prefix/src/tinyxml2-populate-stamp/tinyxml2-populate-test.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"tinyxml2-populate"
+		],
+		"name" : "tinyxml2-populate"
+	}
+}
