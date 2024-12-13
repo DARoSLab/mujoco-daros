@@ -1,0 +1,1 @@
+/usr/bin/cc -g -rdynamic CMakeFiles/user_eg.dir/src/user_eg/user_eg_r.c.o -o ../../bin/user_eg  ../../lib/libqhullstatic_rd.a -lm 

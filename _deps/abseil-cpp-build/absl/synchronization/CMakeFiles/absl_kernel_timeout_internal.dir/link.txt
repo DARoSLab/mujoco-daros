@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_kernel_timeout_internal.a CMakeFiles/absl_kernel_timeout_internal.dir/internal/kernel_timeout.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_kernel_timeout_internal.a

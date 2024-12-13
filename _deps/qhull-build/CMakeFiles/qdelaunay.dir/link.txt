@@ -1,0 +1,1 @@
+/usr/bin/cc -g -rdynamic CMakeFiles/qdelaunay.dir/src/qdelaunay/qdelaun.c.o -o ../../bin/qdelaunay  -Wl,-rpath,::: ../../lib/libqhullstatic_d.a -lm 

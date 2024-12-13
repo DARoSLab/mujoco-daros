@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_crc_cpu_detect.a CMakeFiles/absl_crc_cpu_detect.dir/internal/cpu_detect.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_crc_cpu_detect.a

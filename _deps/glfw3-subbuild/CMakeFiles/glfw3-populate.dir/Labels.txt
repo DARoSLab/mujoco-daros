@@ -1,0 +1,13 @@
+# Target labels
+ glfw3-populate
+# Source files and their labels
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/CMakeFiles/glfw3-populate
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/CMakeFiles/glfw3-populate.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/CMakeFiles/glfw3-populate-complete.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-build.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-configure.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-download.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-install.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-mkdir.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-patch.rule
+/home/qh/Desktop/mujoco-daros/_deps/glfw3-subbuild/glfw3-populate-prefix/src/glfw3-populate-stamp/glfw3-populate-test.rule

@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_cord.a CMakeFiles/absl_cord.dir/cord.cc.o CMakeFiles/absl_cord.dir/cord_analysis.cc.o CMakeFiles/absl_cord.dir/cord_buffer.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_cord.a

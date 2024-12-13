@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../lib/libgmock.a CMakeFiles/gmock.dir/src/gmock-all.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../lib/libgmock.a

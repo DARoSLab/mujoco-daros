@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_cordz_info.a CMakeFiles/absl_cordz_info.dir/internal/cordz_info.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_cordz_info.a

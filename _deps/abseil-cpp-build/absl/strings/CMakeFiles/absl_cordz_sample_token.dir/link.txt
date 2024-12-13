@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_cordz_sample_token.a CMakeFiles/absl_cordz_sample_token.dir/internal/cordz_sample_token.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_cordz_sample_token.a

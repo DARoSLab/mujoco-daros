@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../lib/libsimulate.a CMakeFiles/libsimulate.dir/simulate.cc.o CMakeFiles/platform_ui_adapter.dir/glfw_adapter.cc.o CMakeFiles/platform_ui_adapter.dir/glfw_dispatch.cc.o CMakeFiles/platform_ui_adapter.dir/platform_ui_adapter.cc.o
+/usr/bin/ranlib ../lib/libsimulate.a

@@ -1,0 +1,1 @@
+/usr/bin/cc -g -rdynamic CMakeFiles/qconvex.dir/src/qconvex/qconvex.c.o -o ../../bin/qconvex  -Wl,-rpath,::: ../../lib/libqhullstatic_d.a -lm 

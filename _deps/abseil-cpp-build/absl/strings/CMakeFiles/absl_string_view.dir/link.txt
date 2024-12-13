@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_string_view.a CMakeFiles/absl_string_view.dir/string_view.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_string_view.a

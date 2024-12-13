@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/CMakeFiles/sdflib-populate"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/CMakeFiles/sdflib-populate.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/CMakeFiles/sdflib-populate-complete.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/sdflib-populate-prefix/src/sdflib-populate-stamp/sdflib-populate-build.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/sdflib-populate-prefix/src/sdflib-populate-stamp/sdflib-populate-configure.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/sdflib-populate-prefix/src/sdflib-populate-stamp/sdflib-populate-download.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/sdflib-populate-prefix/src/sdflib-populate-stamp/sdflib-populate-install.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/sdflib-populate-prefix/src/sdflib-populate-stamp/sdflib-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/sdflib-populate-prefix/src/sdflib-populate-stamp/sdflib-populate-patch.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/sdflib-subbuild/sdflib-populate-prefix/src/sdflib-populate-stamp/sdflib-populate-test.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sdflib-populate"
+		],
+		"name" : "sdflib-populate"
+	}
+}

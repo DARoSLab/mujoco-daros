@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/CMakeFiles/tinyobjloader-populate"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/CMakeFiles/tinyobjloader-populate.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/CMakeFiles/tinyobjloader-populate-complete.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-build.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-configure.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-download.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-install.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-patch.rule"
+		},
+		{
+			"file" : "/home/qh/Desktop/mujoco-daros/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-test.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"tinyobjloader-populate"
+		],
+		"name" : "tinyobjloader-populate"
+	}
+}

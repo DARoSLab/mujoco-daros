@@ -1,0 +1,1 @@
+/usr/bin/cc -g -rdynamic CMakeFiles/user_egp.dir/src/user_eg/user_eg.c.o -o ../../bin/user_egp  -Wl,-rpath,/home/qh/Desktop/mujoco-daros/lib ../../lib/libqhull_pd.so.8.1-alpha1 -lm 

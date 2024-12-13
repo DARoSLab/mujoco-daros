@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_flags_marshalling.a CMakeFiles/absl_flags_marshalling.dir/marshalling.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_flags_marshalling.a

@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-11" cr ../../../../lib/libabsl_poison.a CMakeFiles/absl_poison.dir/internal/poison.cc.o
+"/usr/bin/gcc-ranlib-11" ../../../../lib/libabsl_poison.a
