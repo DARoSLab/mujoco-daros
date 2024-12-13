@@ -1,4 +1,4 @@
-sim_mode: 1 # 0: play, 1: record
+sim_mode: 0 # 0: play, 1: record
 sim_duration: 10.0
 
 # Mujoco_XML_FileName: 'prestoe.xml'

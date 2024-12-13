@@ -41,7 +41,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 option(MUJOCO_BUILD_EXAMPLES "Build samples for MuJoCo" ON)
 option(MUJOCO_BUILD_SIMULATE "Build simulate library for MuJoCo" ON)
 option(MUJOCO_BUILD_TESTS "Build tests for MuJoCo" ON)
-option(MUJOCO_TEST_PYTHON_UTIL "Build and test utility libraries for Python bindings" ON)
+option(MUJOCO_TEST_PYTHON_UTIL "Build and test utility libraries for Python bindings" ON.)
 
 if(APPLE AND (MUJOCO_BUILD_EXAMPLES OR MUJOCO_BUILD_SIMULATE))
   enable_language(OBJC)
@@ -67,6 +67,7 @@ set(MUJOCO_HEADERS
     include/mujoco/mjvisualize.h
     include/mujoco/mjxmacro.h
     include/mujoco/mujoco.h
+
 )
 
 # Add metadata to mujoco.dll when building on Windows.
