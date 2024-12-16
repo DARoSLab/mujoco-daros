@@ -1,0 +1,13 @@
+name: nmpc
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pinocchio
+  - pip:
+      - robot_descriptions
+      - jax
+      - mujoco
+      - mujoco_mjx
+      - jaxadi

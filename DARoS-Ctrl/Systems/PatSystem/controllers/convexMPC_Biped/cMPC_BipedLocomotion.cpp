@@ -17,23 +17,14 @@ cMPC_BipedLocomotion::cMPC_BipedLocomotion(
   iterationsBetweenMPC(_iterations_between_mpc),
   horizonLength(20),
   dt(_dt),
-  standing(horizonLength, Vec2<int>(0,0), Vec2<int>(20,20),"Standing"),
-  walking(horizonLength, Vec2<int>(10,0), Vec2<int>(10,10),"Walking"),
-  running(horizonLength, Vec2<int>(0,10),Vec2<int>(9, 9),"Running")
-  // sehwan - shorter stances for running
+  standing(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(20, 20, 20, 20),"Standing"),
+  walking(horizonLength, Vec4<int>(0,0, 10, 10), Vec4<int>(10, 10, 10, 10),"Walking")
 {
-
   _parameters = parameters;
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
-
-  cMPCParameterInitialization(THIS_COM"config/pat_locomotion_parameters");
-  _planner = new Reversal_LIPM_Planner();
-  _planner->PlannerInitialization(THIS_COM"config/tvr_planner");
-  _planner->setOmega(_body_height);//body height
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
   setup_problem(dtMPC, horizonLength, 0.3, 800);
-
 
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
@@ -48,18 +39,6 @@ cMPC_BipedLocomotion::cMPC_BipedLocomotion(
   pBody_des.setZero();
   vBody_des.setZero();
   aBody_des.setZero();
-
-// load LCM leg swing gains
-  Kp << 300, 0, 0,
-     0, 300, 0,
-     0, 0, 150;
-  Kp_stance = 0*Kp;
-
-
-  Kd << 3, 0, 0,
-     0, 3, 0,
-     0, 0, 3;
-  Kd_stance = 0*Kd;
 }
 
 void cMPC_BipedLocomotion::initialize(){
@@ -72,76 +51,31 @@ void cMPC_BipedLocomotion::initialize(){
 void cMPC_BipedLocomotion::_SetupCommand(ControlFSMData<float> & data){
   float x_vel_cmd, y_vel_cmd;
 
-  if(data.userParameters->use_rc){
-    const rc_control_settings* rc_cmd = data._desiredStateCommand->rcCommand;
-    data.userParameters->cmpc_gait = rc_cmd->variable[0];
-    _body_height += rc_cmd->height_variation * 0.08;
-  }
+  _roll_turn_rate = 0.;
+  _pitch_turn_rate = 0.;
+  _yaw_turn_rate = 0.;
+  _x_vel_des = 0.;
+  _y_vel_des = 0.;
 
-  _roll_turn_rate = -data._desiredStateCommand->data.stateDes(9);
-  _pitch_turn_rate = -5.*data._desiredStateCommand->data.stateDes(4);
-  _yaw_turn_rate = -data._desiredStateCommand->data.stateDes(11);
-  _x_vel_des = 0.5*data._desiredStateCommand->data.stateDes(6);
-  _y_vel_des = 0.1*data._desiredStateCommand->data.stateDes(7);
-
-  //printf("x vel des: %f\n", _x_vel_des);
-  //printf("y vel des: %f\n", _y_vel_des);
-
-  _roll_des = data._stateEstimator->getResult().rpy[0] + dt * _roll_turn_rate;
-  _pitch_des = data._stateEstimator->getResult().rpy[1] + dt * _pitch_turn_rate;
-  //_yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  _roll_des = 0.;
+  _pitch_des = 0.;
 }
 
 void cMPC_BipedLocomotion::run(ControlFSMData<float>& data) {
   // Command Setup
   _SetupCommand(data);
   // updateModel(data);
-  gaitNumber = data.userParameters->cmpc_gait;
-  auto& seResult = data._stateEstimator->getResult();
-  // Check if transition to standing
-  if(((gaitNumber == 0) && current_gait != 0) || firstRun)
-  {
-    stand_traj[0] = seResult.position[0] + _model->getComPos()[0];
-    stand_traj[1] = seResult.position[1] + _model->getComPos()[1];
-    stand_traj[2] = _body_height;
-    stand_traj[3] = 0;
-    stand_traj[4] = 0;
-    stand_traj[5] = seResult.rpy[2];
-    world_position_desired[0] = stand_traj[0];
-    world_position_desired[1] = stand_traj[1];
-  }
+  gaitNumber = 0;  // 0: Standing, 1: Walking
 
   // pick gait
   gait = &walking;
-  // printf("Gait %d \n", gaitNumber);
-  if(gaitNumber == 1){
-    // printf("walking\n");
-    gait = &walking;
-  }
-  else if(gaitNumber == 2){
-    gait = &running;
-    _body_height = 0.40;
-  }
   current_gait = gaitNumber;
-
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
 
   // integrate position setpoint
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
   v_des_world = seResult.rBody.transpose() * v_des_robot;
   Vec3<float> v_robot = seResult.vWorld;
-
-  //pretty_print(v_des_world, std::cout, "v des world");
-
-  //Integral-esque pitche and roll compensation
-  if(fabs(v_robot[0]) > .2)   //avoid dividing by zero
-  {
-    rpy_int[1] += dt*(_pitch_des - seResult.rpy[1])/v_robot[0];
-  }
-  if(fabs(v_robot[1]) > 0.1)
-  {
-    rpy_int[0] += dt*(_roll_des - seResult.rpy[0])/v_robot[1];
-  }
 
   rpy_int[0] = fminf(fmaxf(rpy_int[0], -.25), .25);
   rpy_int[1] = fminf(fmaxf(rpy_int[1], -.25), .25);
@@ -195,17 +129,10 @@ void cMPC_BipedLocomotion::run(ControlFSMData<float>& data) {
     } else {
       swingTimeRemaining[i] -= dt;
     }
-    //if(swingTimeRemaining[i] < swingTimes[i]*0.9){
-      //continue;
-    //}
 
     footSwingTrajectories[i].setHeight(0.05); // sehwan - larger swing height for running
 
     Vec3<float> pRobotFrame;
-    // if(i<2) pRobotFrame = (data._pat->getHipLocation(0));
-    // else pRobotFrame = (data._pat->getHipLocation(1));
-
-    pRobotFrame = data._pat->getHipLocation(i);
 
     float stance_time = gait->getCurrentStanceTime(dtMPC, i);
     Vec3<float> pYawCorrected =
@@ -230,27 +157,6 @@ void cMPC_BipedLocomotion::run(ControlFSMData<float>& data) {
     Vec2<float> pf_rel_body, pf_rel_world;
     Mat2<float> rotMatYaw;
     rotMatYaw << cos(seResult.rpy[2]), -sin(seResult.rpy[2]), sin(seResult.rpy[2]), cos(seResult.rpy[2]);
-
-    //pf_rel_body[0] =
-      //seResult.vBody[0] * .5 * stance_time +
-      //.13f*(seResult.vBody[0]-v_des_robot[0]) +
-      //0.0f*sqrt(seResult.position[2]/9.81f) * (seResult.vBody[1]*_yaw_turn_rate);
-    // float omega, tx, ty;
-    // float kappax, kappay;
-    // float kpx, kpy, kdx, kdy;
-    // omega = sqrt(9.8/0.40);
-    // tx = 0.185;
-    // ty = 0.180;
-    // kappax = 0.4;
-    // kappay = 0.4;
-    // kpx = 1.0; //1 + kappax;
-    // kpy = 1.0; //1 + kappay;
-    // kdx = 1.2; //(1.0/omega)*(cosh(omega*tx)/sinh(omega*tx));
-    // kdy = 1.2; //(1.0/omega)*(cosh(omega*ty)/sinh(omega*ty));
-    // printf("kpx %f kdx %f\n", kpx, kdx);
-    // printf("kpy %f kdy %f\n", kpy, kdy);
-
-
 
     Vec2<float> swingStates = gait->getSwingState();
     // Vec2<float> contactStates = gait->getContactState();
@@ -325,21 +231,6 @@ void cMPC_BipedLocomotion::run(ControlFSMData<float>& data) {
         // target_loc -= stand_foot_pos;
 
         target_loc[2] = 0;
-        //
-        //
-        // std::cout << "Pf: " << target_loc << "time remaining" << swingTimeRemaining[i]<< '\n';
-
-
-        // pf_rel_body[0] = 0.4*body_from_foot[0] + 0.2*seResult.vBody[0];
-        //
-        // pf_rel_body[1] = 0.7*body_from_foot[1] + 0.2*seResult.vBody[1];
-
-        // pf_rel_world = rotMatYaw * pf_rel_body;
-
-        // for(int xy = 0; xy < 2; xy++){
-        //   pf_rel_world[xy] = fminf(fmaxf(pf_rel_world[xy], -p_rel_max), p_rel_max);
-        //   Pf[xy] += pf_rel_world[xy];
-        // }
 
         for(int xy = 0; xy < 2; xy++){
           Pf[xy] = target_loc[xy];

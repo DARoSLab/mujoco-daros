@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <eigen3/Eigen/Dense>
 
-//adding this line adds print statements and sanity checks 
+//adding this line adds print statements and sanity checks
 //that are too slow for realtime use.
-//#define K_DEBUG
+// #define K_DEBUG
 
 typedef double dbl;
 typedef float flt;
@@ -26,4 +26,7 @@ typedef int16_t  s16;
 typedef int32_t  s32;
 typedef int64_t  s64;
 
+
+const static int NUM_CONTACTS = 10;
+const static int K_MAX_GAIT_SEGMENTS = 30;
 #endif

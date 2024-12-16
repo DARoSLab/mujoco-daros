@@ -1,0 +1,23 @@
+
+name: "staccatoe"
+# urdf_path: "/home/dan/KinoDynamic-Trajectory-Optimization/resources/urdf/staccatoe/urdf/staccatoe_motor_limits.urdf"
+urdf_path: "/home/dan/DARoS-Core/Systems/staccatoe/staccatoe_config/urdfs/staccatoe_v2_contact_dummy_links.urdf"
+contact_link_names:
+  [
+    "R_heel_sphere_bottom_link",
+    "R_front_left_toe_box_link",
+    "R_front_right_toe_box_link",
+    "R_hind_left_toe_box_link",
+    "R_hind_right_toe_box_link",
+  ]
+horizon: 5
+# compiled_lib_path: "/home/dan/nmpc_mujoco/src/controllers/nmpc/nmpc_files"
+# results_path: "/home/dan/nmpc_mujoco/src/controllers/nmpc"
+compiled_lib_path: "/home/dan/DARoS-Core/Systems/staccatoe/staccatoe_config/nmpc_config/"
+results_path: "/home/dan/DARoS-Core/Systems/staccatoe/controllers/nmpc"
+casadi_real: "double"
+casadi_int: "long long int"
+
+
+use_motor_limits: true
+joint_to_motor_func: "../casadi_funcs/staccatoe_jt_to_motor_func_safe.casadi"

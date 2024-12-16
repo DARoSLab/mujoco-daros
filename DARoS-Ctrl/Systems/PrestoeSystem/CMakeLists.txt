@@ -14,6 +14,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/LCM-Types/cpp)
 #             CtrlState/JPosCtrlState.cpp)
 
 file(GLOB_RECURSE WBC_SRC Controller/WBC_Prestoe/*.cpp)
+file(GLOB_RECURSE MPC_SRC Controller/convexMPC/*.cpp)
 
 add_library(prestoe_ctrl_lib STATIC 
                       PrestoeSystem.cpp
@@ -21,7 +22,9 @@ add_library(prestoe_ctrl_lib STATIC
                       StateMachine/JPosCtrlState.cpp
                       StateMachine/BalanceStandState.cpp
                       StateMachine/BoxPickupState.cpp
+                      StateMachine/LocomotionState.cpp
                       ${WBC_SRC}
+                      ${MPC_SRC}
                       )
 
 target_link_libraries(prestoe_ctrl_lib daros-utils daros-ctrl-utils lcm)

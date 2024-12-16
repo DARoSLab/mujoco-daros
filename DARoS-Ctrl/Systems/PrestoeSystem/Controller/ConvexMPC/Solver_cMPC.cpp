@@ -8,8 +8,10 @@
 #include <sys/time.h>
 #include <utilities/Timer.h>
 
-//#define K_PRINT_EVERYTHING
+// #define K_PRINT_EVERYTHING
 #define BIG_NUMBER 5e10
+
+
 //big enough to act like infinity, small enough to avoid numerical weirdness.
 
 BipedRobotState rs;
@@ -22,9 +24,9 @@ Matrix<fpt,Dynamic,Dynamic> B_qp_trans_S;
 
 Matrix<fpt,Dynamic,13> A_qp;
 Matrix<fpt,Dynamic,Dynamic> B_qp;
-Matrix<fpt,13,12> Bdt;
+Matrix<fpt,13,3*NUM_CONTACTS> Bdt;
 Matrix<fpt,13,13> Adt;
-Matrix<fpt,25,25> ABc,expmm;
+Matrix<fpt,13 + 3*NUM_CONTACTS, 13 + 3*NUM_CONTACTS> ABc,expmm;
 Matrix<fpt,Dynamic,Dynamic> S;
 Matrix<fpt,Dynamic,1> X_d;
 Matrix<fpt,Dynamic,1> U_b;
@@ -33,7 +35,7 @@ Matrix<fpt,Dynamic,Dynamic> fmat;
 Matrix<fpt,Dynamic,Dynamic> qH;
 Matrix<fpt,Dynamic,1> qg;
 
-Matrix<fpt,Dynamic,Dynamic> eye_12h;
+Matrix<fpt,Dynamic,Dynamic> eye_h;
 
 qpOASES::real_t* H_qpoases;
 qpOASES::real_t* g_qpoases;
@@ -53,6 +55,9 @@ u8 real_allocated = 0;
 
 char var_elim[2000];
 char con_elim[2000];
+
+
+
 
 mfp* get_q_soln()
 {
@@ -82,15 +87,15 @@ void matrix_to_real(qpOASES::real_t* dst, Matrix<fpt,Dynamic,Dynamic> src, s16 r
 }
 
 
-void c2qp(Matrix<fpt,13,13> Ac, Matrix<fpt,13,12> Bc,fpt dt,s16 horizon)
+void c2qp(Matrix<fpt,13,13> Ac, Matrix<fpt,13,3*NUM_CONTACTS> Bc,fpt dt,s16 horizon)
 {
   ABc.setZero();
   ABc.block(0,0,13,13) = Ac;
-  ABc.block(0,13,13,12) = Bc;
+  ABc.block(0,13,13,3*NUM_CONTACTS) = Bc;
   ABc = dt*ABc;
   expmm = ABc.exp();
   Adt = expmm.block(0,0,13,13);
-  Bdt = expmm.block(0,13,13,12);
+  Bdt = expmm.block(0,13,13,3*NUM_CONTACTS);
 #ifdef K_PRINT_EVERYTHING
   cout<<"Adt: \n"<<Adt<<"\nBdt:\n"<<Bdt<<endl;
 #endif
@@ -112,7 +117,7 @@ void c2qp(Matrix<fpt,13,13> Ac, Matrix<fpt,13,12> Bc,fpt dt,s16 horizon)
       if(r >= c)
       {
         s16 a_num = r-c;
-        B_qp.block(13*r,12*c,13,12) = powerMats[a_num] /*Adt.pow(a_num)*/ * Bdt;
+        B_qp.block(13*r,3*NUM_CONTACTS*c,13,3*NUM_CONTACTS) = powerMats[a_num] /*Adt.pow(a_num)*/ * Bdt;
       }
     }
   }
@@ -130,8 +135,8 @@ void resize_qp_mats(s16 horizon)
   A_qp.resize(13*horizon, Eigen::NoChange);
   mcount += 13*horizon*1;
 
-  B_qp.resize(13*horizon, 12*horizon);
-  mcount += 13*h2*12;
+  B_qp.resize(13*horizon, 3*NUM_CONTACTS*horizon);
+  mcount += 13*h2*3*NUM_CONTACTS;
 
   S.resize(13*horizon, 13*horizon);
   mcount += 13*13*h2;
@@ -139,20 +144,20 @@ void resize_qp_mats(s16 horizon)
   X_d.resize(13*horizon, Eigen::NoChange);
   mcount += 13*horizon;
 
-  U_b.resize(20*horizon, Eigen::NoChange);
-  mcount += 20*horizon;
+  U_b.resize(5*NUM_CONTACTS*horizon, Eigen::NoChange);
+  mcount += 5*NUM_CONTACTS*horizon;
 
-  fmat.resize(20*horizon, 12*horizon);
-  mcount += 20*12*h2;
+  fmat.resize(5*NUM_CONTACTS*horizon, 3*NUM_CONTACTS*horizon);
+  mcount += 5*NUM_CONTACTS*3*NUM_CONTACTS*h2;
 
-  qH.resize(12*horizon, 12*horizon);
-  mcount += 12*12*h2;
+  qH.resize(3*NUM_CONTACTS*horizon, 3*NUM_CONTACTS*horizon);
+  mcount += 3*NUM_CONTACTS*3*NUM_CONTACTS*h2;
 
-  qg.resize(12*horizon, Eigen::NoChange);
-  mcount += 12*horizon;
+  qg.resize(3*NUM_CONTACTS*horizon, Eigen::NoChange);
+  mcount += 3*NUM_CONTACTS*horizon;
 
-  eye_12h.resize(12*horizon, 12*horizon);
-  mcount += 12*12*horizon;
+  eye_h.resize(3*NUM_CONTACTS*horizon, 3*NUM_CONTACTS*horizon);
+  mcount += 3*NUM_CONTACTS*3*NUM_CONTACTS*horizon;
 
   //printf("realloc'd %d floating point numbers.\n",mcount);
   mcount = 0;
@@ -164,7 +169,7 @@ void resize_qp_mats(s16 horizon)
   U_b.setZero();
   fmat.setZero();
   qH.setZero();
-  eye_12h.setIdentity();
+  eye_h.setIdentity();
 
   //TODO: use realloc instead of free/malloc on size changes
 
@@ -185,31 +190,31 @@ void resize_qp_mats(s16 horizon)
     free(q_red);
   }
 
-  H_qpoases = (qpOASES::real_t*)malloc(12*12*horizon*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*12*h2;
-  g_qpoases = (qpOASES::real_t*)malloc(12*1*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*horizon;
-  A_qpoases = (qpOASES::real_t*)malloc(12*20*horizon*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*20*h2;
-  lb_qpoases = (qpOASES::real_t*)malloc(20*1*horizon*sizeof(qpOASES::real_t));
-  mcount += 20*horizon;
-  ub_qpoases = (qpOASES::real_t*)malloc(20*1*horizon*sizeof(qpOASES::real_t));
-  mcount += 20*horizon;
-  q_soln = (qpOASES::real_t*)malloc(12*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*horizon;
+  H_qpoases = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*3*NUM_CONTACTS*horizon*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*3*NUM_CONTACTS*h2;
+  g_qpoases = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*1*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*horizon;
+  A_qpoases = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*5*NUM_CONTACTS*horizon*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*5*NUM_CONTACTS*h2;
+  lb_qpoases = (qpOASES::real_t*)malloc(5*NUM_CONTACTS*1*horizon*sizeof(qpOASES::real_t));
+  mcount += 5*NUM_CONTACTS*horizon;
+  ub_qpoases = (qpOASES::real_t*)malloc(5*NUM_CONTACTS*1*horizon*sizeof(qpOASES::real_t));
+  mcount += 5*NUM_CONTACTS*horizon;
+  q_soln = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*horizon;
 
-  H_red = (qpOASES::real_t*)malloc(12*12*horizon*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*12*h2;
-  g_red = (qpOASES::real_t*)malloc(12*1*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*horizon;
-  A_red = (qpOASES::real_t*)malloc(12*20*horizon*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*20*h2;
-  lb_red = (qpOASES::real_t*)malloc(20*1*horizon*sizeof(qpOASES::real_t));
-  mcount += 20*horizon;
-  ub_red = (qpOASES::real_t*)malloc(20*1*horizon*sizeof(qpOASES::real_t));
-  mcount += 20*horizon;
-  q_red = (qpOASES::real_t*)malloc(12*horizon*sizeof(qpOASES::real_t));
-  mcount += 12*horizon;
+  H_red = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*3*NUM_CONTACTS*horizon*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*3*NUM_CONTACTS*h2;
+  g_red = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*1*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*horizon;
+  A_red = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*5*NUM_CONTACTS*horizon*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*5*NUM_CONTACTS*h2;
+  lb_red = (qpOASES::real_t*)malloc(5*NUM_CONTACTS*1*horizon*sizeof(qpOASES::real_t));
+  mcount += 5*NUM_CONTACTS*horizon;
+  ub_red = (qpOASES::real_t*)malloc(5*NUM_CONTACTS*1*horizon*sizeof(qpOASES::real_t));
+  mcount += 5*NUM_CONTACTS*horizon;
+  q_red = (qpOASES::real_t*)malloc(3*NUM_CONTACTS*horizon*sizeof(qpOASES::real_t));
+  mcount += 3*NUM_CONTACTS*horizon;
   real_allocated = 1;
 
   //printf("malloc'd %d floating point numbers.\n",mcount);
@@ -230,7 +235,7 @@ inline Matrix<fpt,3,3> cross_mat(Matrix<fpt,3,3> I_inv, Matrix<fpt,3,1> r)
   return I_inv * cm;
 }
 //continuous time state space matrices.
-void ct_ss_mats(Matrix<fpt,3,3> I_world, fpt m, Matrix<fpt,3,4> r_feet, Matrix<fpt,3,3> R_yaw, Matrix<fpt,13,13>& A, Matrix<fpt,13,12>& B, float x_drag)
+void ct_ss_mats(Matrix<fpt,3,3> I_world, fpt m, Matrix<fpt,3,NUM_CONTACTS> r_feet, Matrix<fpt,3,3> R_yaw, Matrix<fpt,13,13>& A, Matrix<fpt,13,3*NUM_CONTACTS>& B, float x_drag)
 {
   A.setZero();
   A(3,9) = 1.f;
@@ -239,12 +244,13 @@ void ct_ss_mats(Matrix<fpt,3,3> I_world, fpt m, Matrix<fpt,3,4> r_feet, Matrix<f
   A(5,11) = 1.f;
 
   A(11,12) = 1.f;
+  A(12,12) = 0.f; // Daniel for gravity
   A.block(0,6,3,3) = R_yaw.transpose();
 
   B.setZero();
   Matrix<fpt,3,3> I_inv = I_world.inverse();
 
-  for(s16 b = 0; b < 4; b++)
+  for(s16 b = 0; b < NUM_CONTACTS; b++)
   {
     B.block(6,b*3,3,3) = cross_mat(I_inv,r_feet.col(b));
     B.block(9,b*3,3,3) = Matrix<fpt,3,3>::Identity() / m;
@@ -282,26 +288,78 @@ void print_update_data(update_data_t* update, s16 horizon)
   print_named_array("weights",update->weights,1,12);
   print_named_array("trajectory",update->traj,horizon,12);
   pnv("Alpha",update->alpha);
-  print_named_array("gait",update->gait,horizon,4);
+  print_named_array("gait",update->gait,horizon,NUM_CONTACTS);
 }
 
 
 Matrix<fpt,13,1> x_0;
 Matrix<fpt,3,3> I_world;
 Matrix<fpt,13,13> A_ct;
-Matrix<fpt,13,12> B_ct_r;
+Matrix<fpt,13,3*NUM_CONTACTS> B_ct_r;
 
 Matrix<fpt,13,13> get_A_ct(){
   return A_ct;
 }
-Matrix<fpt,13,12> get_B_ct(){
+Matrix<fpt,13,3*NUM_CONTACTS> get_B_ct(){
   return B_ct_r;
 }
 
+void updateQPMats(fpt m,
+                  Matrix<fpt,3,3> R_yaw,
+                  Matrix<fpt,3, NUM_CONTACTS> * r_feet,
+                  fpt* dt_segments,
+                  s16 horizon,
+                  float x_drag)
+{
+  // Matrix<fpt,13,13> A_ct;
+  // Matrix<fpt,13,3*NUM_CONTACTS> B_ct_r;
+  Matrix<fpt,13,3*NUM_CONTACTS> Bdts[horizon];
+  Matrix<fpt,13,13> powerMats[40];
+  powerMats[0].setIdentity();
+
+  for(int k(1); k<horizon+1; ++k){
+    ct_ss_mats(I_world, m, r_feet[k-1], R_yaw, A_ct, B_ct_r, x_drag);
+    // std::cout << "Act: " << A_ct << '\n';
+    // std::cout << "Bct: " << B_ct_r << '\n';
+    // std::cout << "dt: " << dt_segments[k] << '\n';
+    ABc.setZero();
+    ABc.block(0,0,13,13) = A_ct;
+    ABc.block(0,13,13,3*NUM_CONTACTS) = B_ct_r;
+    ABc = dt_segments[k]*ABc;
+    expmm = ABc.exp();
+    Adt = expmm.block(0,0,13,13);
+    Bdt = expmm.block(0,13,13,3*NUM_CONTACTS);
+
+    powerMats[k] = Adt * powerMats[k-1];
+    Bdts[k-1] = Bdt;
+  }
+
+  for(s16 r = 0; r < horizon; r++)
+  {
+    A_qp.block(13*r,0,13,13) = powerMats[r+1];//Adt.pow(r+1);
+    for(s16 c = 0; c < horizon; c++)
+    {
+      if(r >= c)
+      {
+        s16 a_num = r-c;
+        B_qp.block(13*r,3*NUM_CONTACTS*c,13,3*NUM_CONTACTS) = powerMats[a_num]* Bdts[c];
+      }
+    }
+  }
+  //For debugging i.e next state
+  ct_ss_mats(I_world, m, r_feet[0], R_yaw, A_ct, B_ct_r, x_drag);
+  #ifdef K_PRINT_EVERYTHING
+    cout<<"AQP:\n"<<A_qp<<"\nBQP:\n"<<B_qp<<endl;
+  #endif
+}
 
 void solve_mpc(update_data_t* update, problem_setup* setup)
 {
-  rs.set(update->p, update->v, update->q, update->w, update->r, update->yaw);
+
+  if(setup->general_form)
+    rs.set(update->p, update->v, update->q, update->w, update->r, update->yaw, update->I_vec, update->m, setup->horizon);
+  else
+    rs.set(update->p, update->v, update->q, update->w, update->r, update->yaw);
 #ifdef K_PRINT_EVERYTHING
 
   printf("-----------------\n");
@@ -325,18 +383,28 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   I_world = rs.R_yaw * rs.I_body * rs.R_yaw.transpose(); //original
   //I_world = rs.R_yaw.transpose() * rs.I_body * rs.R_yaw;
   //cout<<rs.R_yaw<<endl;
-  ct_ss_mats(I_world,rs.m,rs.r_feet,rs.R_yaw,A_ct,B_ct_r, update->x_drag);
 
 
+  if(setup->general_form){
+
+    updateQPMats(rs.m,
+                 rs.R_yaw,
+                 rs.r_feet_full,
+                 update->dt_segments,
+                 setup->horizon,
+                 update->x_drag);
+
+  }else{
+    ct_ss_mats(I_world,rs.m,rs.r_feet,rs.R_yaw,A_ct,B_ct_r, update->x_drag);
 #ifdef K_PRINT_EVERYTHING
   cout<<"Initial state: \n"<<x_0<<endl;
   cout<<"World Inertia: \n"<<I_world<<endl;
   cout<<"A CT: \n"<<A_ct<<endl;
   cout<<"B CT (simplified): \n"<<B_ct_r<<endl;
 #endif
-  //QP matrices
-  c2qp(A_ct,B_ct_r,setup->dt,setup->horizon);
-
+    //QP matrices
+    c2qp(A_ct,B_ct_r,setup->dt,setup->horizon);
+  }
   //weights
   Matrix<fpt,13,1> full_weight;
   for(u8 i = 0; i < 12; i++)
@@ -359,13 +427,13 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   s16 k = 0;
   for(s16 i = 0; i < setup->horizon; i++)
   {
-    for(s16 j = 0; j < 4; j++)
+    for(s16 j = 0; j < NUM_CONTACTS; j++)
     {
       U_b(5*k + 0) = BIG_NUMBER;
       U_b(5*k + 1) = BIG_NUMBER;
       U_b(5*k + 2) = BIG_NUMBER;
       U_b(5*k + 3) = BIG_NUMBER;
-      U_b(5*k + 4) = update->gait[i*4 + j] * setup->f_max;
+      U_b(5*k + 4) = update->gait[i*NUM_CONTACTS + j] * setup->f_max;
       k++;
     }
   }
@@ -379,7 +447,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
           0, -mu, 1.f,
           0,   0, 1.f;
 
-  for(s16 i = 0; i < setup->horizon*4; i++)
+  for(s16 i = 0; i < setup->horizon*NUM_CONTACTS; i++)
   {
     fmat.block(i*5,i*3,5,3) = f_block;
   }
@@ -387,27 +455,26 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
 
 
 
-  //qH = 2*(B_qp.transpose()*S*B_qp + update->alpha*eye_12h);
+  //qH = 2*(B_qp.transpose()*S*B_qp + update->alpha*eye_h);
   //qg = 2*B_qp.transpose()*S*(A_qp*x_0 - X_d);
 
-  qH = 2*(B_qp_trans_S*B_qp + update->alpha*eye_12h);
+  qH = 2*(B_qp_trans_S*B_qp + update->alpha*eye_h);
   qg = 2*B_qp_trans_S*(A_qp*x_0 - X_d);
 
 
 
-  matrix_to_real(H_qpoases,qH,setup->horizon*12, setup->horizon*12);
-  matrix_to_real(g_qpoases,qg,setup->horizon*12, 1);
-  matrix_to_real(A_qpoases,fmat,setup->horizon*20, setup->horizon*12);
-  matrix_to_real(ub_qpoases,U_b,setup->horizon*20, 1);
+  matrix_to_real(H_qpoases,qH,setup->horizon*3*NUM_CONTACTS, setup->horizon*3*NUM_CONTACTS);
+  matrix_to_real(g_qpoases,qg,setup->horizon*3*NUM_CONTACTS, 1);
+  matrix_to_real(A_qpoases,fmat,setup->horizon*5*NUM_CONTACTS, setup->horizon*3*NUM_CONTACTS);
+  matrix_to_real(ub_qpoases,U_b,setup->horizon*5*NUM_CONTACTS, 1);
 
-  for(s16 i = 0; i < 20*setup->horizon; i++)
+  for(s16 i = 0; i < 5*NUM_CONTACTS*setup->horizon; i++)
     lb_qpoases[i] = 0.0f;
 
-  s16 num_constraints = 20*setup->horizon;
-  s16 num_variables = 12*setup->horizon;
+  s16 num_constraints = 5*NUM_CONTACTS*setup->horizon;
+  s16 num_variables = 3*NUM_CONTACTS*setup->horizon;
 
 
-  qpOASES::int_t nWSR = 100;
 
 
   int new_vars = num_variables;
@@ -502,17 +569,26 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
     Timer solve_timer;
     qpOASES::QProblem problem_red (new_vars, new_cons);
     qpOASES::Options op;
+    qpOASES::int_t nWSR = 100;
     op.setToMPC();
+    // op.setToReliable();
     op.printLevel = qpOASES::PL_NONE;
     problem_red.setOptions(op);
-    //int_t nWSR = 50000;
-
+    // int_t nWSR = 50000;
+    // printf("num vars before: %d after: %d \n", num_variables, new_vars);
+    // printf("num cons before: %d after: %d \n", num_constraints, new_cons);
 
     int rval = problem_red.init(H_red, g_red, A_red, NULL, NULL, lb_red, ub_red, nWSR);
-    (void)rval;
+    // (void)rval;
+    if(rval != qpOASES::SUCCESSFUL_RETURN)
+      printf("failed to Init!\n");
     int rval2 = problem_red.getPrimalSolution(q_red);
     if(rval2 != qpOASES::SUCCESSFUL_RETURN)
       printf("failed to solve!\n");
+    // auto opt_cost = problem_red.getObjVal();
+    // printf("opt cost: %f\n", opt_cost);
+    // printf("num active constraints: %d \n", problem_red.getNAC());
+    // printf("num in active constraints: %d \n", problem_red.getNIAC());
 
     // printf("solve time: %.3f ms, size %d, %d\n", solve_timer.getMs(), new_vars, new_cons);
 
@@ -540,3 +616,47 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
 
 }
 
+
+void get_optimal_mpc_traj(Matrix<fpt,Dynamic, 1> & X_mpc, const int horizon){
+
+  Matrix<fpt, 3*NUM_CONTACTS*K_MAX_GAIT_SEGMENTS, 1> U_star;
+  for(s16 k=0; k<3*NUM_CONTACTS*horizon; ++k){
+
+    U_star[k] = q_soln[k];
+  }
+  X_mpc = A_qp*x_0;
+  X_mpc += B_qp*U_star.head(3*NUM_CONTACTS*horizon);
+
+}
+void get_Aqpx0(Matrix<fpt,Dynamic, 1> & Aqp_x0){
+  Aqp_x0 = A_qp*x_0;
+}
+void get_x0(Matrix<fpt,13,1> &x0){
+  x0 = x_0;
+}
+void get_BqpU(Matrix<fpt,Dynamic, 1> & BqpU, const int horizon){
+  Matrix<fpt, 3*NUM_CONTACTS*K_MAX_GAIT_SEGMENTS, 1> U_star;
+  for(s16 k=0; k<3*NUM_CONTACTS*horizon; ++k){
+    U_star[k] = q_soln[k];
+  }
+  BqpU= B_qp*U_star.head(3*NUM_CONTACTS*horizon);
+}
+Matrix<fpt,Dynamic,13> get_Aqp(){
+  return A_qp;
+}
+
+Matrix<fpt,Dynamic,Dynamic> get_Bqp(){
+  return B_qp;
+}
+
+
+Matrix<fpt, Dynamic, 1> getXd(){
+
+  return X_d;
+}
+
+Matrix<fpt,Dynamic,1> get_Ub(){return U_b;}
+Matrix<fpt,Dynamic,1> get_Lb(){return 0.* U_b;}
+Matrix<fpt,Dynamic,Dynamic> get_C(){return fmat;}
+Matrix<fpt,Dynamic,Dynamic> get_H(){return qH;}
+Matrix<fpt,Dynamic,1> get_g(){ return qg;}

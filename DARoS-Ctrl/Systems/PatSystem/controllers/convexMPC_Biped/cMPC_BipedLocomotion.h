@@ -1,8 +1,6 @@
 #ifndef BIPED_CONVEXMPCLOCOMOTION_PAT_H
 #define BIPED_CONVEXMPCLOCOMOTION_PAT_H
 
-#include <ctrl_utils/FootSwingTrajectory.h>
-#include <ControlFSMData.h>
 #include "cppTypes.h"
 #include "BipedGait.h"
 #include "cMPC_BipedInterface.h"
@@ -105,5 +103,4 @@ private:
   void cMPCParameterInitialization(const std::string & file);
 };
 
-
-#endif //CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
+#endif //CONVEX_MPC_LOCOMOTION_H
