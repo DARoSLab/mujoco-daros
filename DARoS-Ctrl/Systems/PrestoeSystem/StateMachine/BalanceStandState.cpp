@@ -62,6 +62,11 @@ void BalanceStandState<T>::RunNominal() {
   _UpdateModel();
   _KeepPostureStep();
   _UpdateCommand();
+
+  // CheaterModeObserver<T>* cheater_mode_obs = 
+  //   dynamic_cast<CheaterModeObserver<T>*>(
+  //     _obs_manager->_observers[PrestoeObsList::CheaterMode]);
+  // pretty_print(cheater_mode_obs->_q, std::cout, "q"); 
 }
 
 template<typename T>

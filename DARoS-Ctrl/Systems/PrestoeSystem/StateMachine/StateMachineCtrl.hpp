@@ -9,6 +9,7 @@ enum StateList {
   JOINT_PD = 1, 
   BALANCE_STAND = 2,
   BOX_PICKUP = 3,
+  LOCOMOTION = 4,
   NUM_STATE
 };
 

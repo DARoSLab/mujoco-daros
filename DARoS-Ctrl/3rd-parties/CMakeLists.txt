@@ -1,5 +1,6 @@
 add_subdirectory(qpOASES)
 add_subdirectory(osqp)
+add_subdirectory(casadi)
 # add_subdirectory(qpSWIFT)
 # add_subdirectory(lord_imu)
 add_subdirectory(urdf)

@@ -1,4 +1,4 @@
-#include "PrestoeStandCtrl.hpp"
+#include "PrestoeLocomotionCtrl.hpp"
 #include <WBIC_FB/ContactSet/SingleContact.hpp>
 #include <WBIC_FB/TaskSet/BodyOriTask.hpp>
 #include <WBIC_FB/TaskSet/JPosTask.hpp>
@@ -7,7 +7,7 @@
 #include <ParamHandler/ParamHandler.hpp>
 
 template<typename T>
-PrestoeStandCtrl<T>::PrestoeStandCtrl(const FloatingBaseModel<T> * model, 
+PrestoeLocomotionCtrl<T>::PrestoeLocomotionCtrl(const FloatingBaseModel<T> * model, 
 const std::string & config_file): 
  WBC_Ctrl<T>(model)
 {
@@ -24,9 +24,9 @@ const std::string & config_file):
 }
 
 template<typename T>
-void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
+void PrestoeLocomotionCtrl<T>::_ContactTaskUpdate(void* input){
   // printf("PrestoeStandCtrl<T>::_ContactTaskUpdate\n");
-  _input_data = static_cast<PrestoeStandCtrlData<T>* >(input);
+  _input_data = static_cast<PrestoeLocomotionCtrlData<T>* >(input);
 
   _CleanUp();
   Vec3<T> zero_vec3; zero_vec3.setZero();
@@ -43,35 +43,38 @@ void PrestoeStandCtrl<T>::_ContactTaskUpdate(void* input){
 
    // Contact     
   for(size_t i(0); i<_num_contact; ++i){
+    if(_input_data->contact_state[i] == 1){
       _foot_contact[i]->setRFDesired((DVec<T>)(_input_data->Fr_des[i]));
       _foot_contact[i]->UpdateContactSpec();
       this->_contact_list.push_back(_foot_contact[i]);
+    }
   }
-    // joint position task
+  // joint position task
   DVec<T> zero_vec(prestoe::num_act_joint);zero_vec.setZero();
   _jpos_task->UpdateTask(&(_input_data->jpos_des), zero_vec, zero_vec);
   this->_task_list.push_back(_jpos_task);
 }
 
 template<typename T>
-void PrestoeStandCtrl<T>::_ReadConfig(const std::string & config_file){
+void PrestoeLocomotionCtrl<T>::_ReadConfig(const std::string & config_file){
   ParamHandler handler(config_file);
   handler.getEigenVec("WBC_Kp_body", ((BodyPosTask<T>*)_body_pos_task)->_Kp );
   handler.getEigenVec("WBC_Kd_body", ((BodyPosTask<T>*)_body_pos_task)->_Kd );
   // pretty_print(((BodyPosTask<T>*)_body_pos_task)->_Kp, std::cout, "Kp body");
   handler.getEigenVec("WBC_Kp_ori", ((BodyOriTask<T>*)_body_ori_task)->_Kp );
   handler.getEigenVec("WBC_Kd_ori", ((BodyOriTask<T>*)_body_ori_task)->_Kd );
- }
+
+}
 
 
 template<typename T>
-void PrestoeStandCtrl<T>::_CleanUp(){
+void PrestoeLocomotionCtrl<T>::_CleanUp(){
   this->_contact_list.clear();
   this->_task_list.clear();
 }
 
 template<typename T>
-void PrestoeStandCtrl<T>::_LCM_PublishData() {
+void PrestoeLocomotionCtrl<T>::_LCM_PublishData() {
 
   for(size_t i(0); i<3; ++i){
     this->_wbc_data_lcm.body_pos_cmd[i] = _input_data->pBody_des[i];
@@ -99,7 +102,7 @@ void PrestoeStandCtrl<T>::_LCM_PublishData() {
 }
 
 template<typename T>
-PrestoeStandCtrl<T>::~PrestoeStandCtrl(){
+PrestoeLocomotionCtrl<T>::~PrestoeLocomotionCtrl(){
   delete _body_ori_task;
   delete _jpos_task;
   delete _body_pos_task;
@@ -107,5 +110,5 @@ PrestoeStandCtrl<T>::~PrestoeStandCtrl(){
     delete _foot_contact[i];
   }
 }
-template class PrestoeStandCtrl<float>;
-template class PrestoeStandCtrl<double>;
+template class PrestoeLocomotionCtrl<float>;
+template class PrestoeLocomotionCtrl<double>;

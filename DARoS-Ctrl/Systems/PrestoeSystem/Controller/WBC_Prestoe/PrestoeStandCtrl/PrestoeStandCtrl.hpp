@@ -15,7 +15,6 @@ class PrestoeStandCtrlData{
 
     Vec3<T> Fr_des[prestoe_contact::num_foot_contact];
     DVec<T> jpos_des = DVec<T>::Zero(prestoe::num_act_joint);
-    Vec5<T> contact_state;
 };
 
 template<typename T>

@@ -3,6 +3,7 @@
 #include "JPosCtrlState.hpp"
 #include "BalanceStandState.hpp"
 #include "BoxPickupState.hpp"
+#include "LocomotionState.hpp"
 
 template <typename T>
 StateMachineCtrl<T>::StateMachineCtrl(ObserverManager<T>* obs_manager, PrestoeSystem<T>* sys) {
@@ -11,6 +12,7 @@ StateMachineCtrl<T>::StateMachineCtrl(ObserverManager<T>* obs_manager, PrestoeSy
   _state_list[StateList::JOINT_PD] = new JPosCtrlState<T>(obs_manager, sys);
   _state_list[StateList::BALANCE_STAND] = new BalanceStandState<T>(obs_manager, sys);
   _state_list[StateList::BOX_PICKUP] = new BoxPickupState<T>(obs_manager, sys);
+  _state_list[StateList::LOCOMOTION] = new LocomotionState<T>(obs_manager, sys);
   
   printf("[State Machine Control] Constructed\n");
 }

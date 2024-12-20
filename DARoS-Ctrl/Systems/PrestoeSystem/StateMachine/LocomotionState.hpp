@@ -1,11 +1,11 @@
-#ifndef __LOCOMOTION_H__
-#define __LOCOMOTION_H__
+#ifndef __LOCOMOTION_STATE_H__
+#define __LOCOMOTION_STATE_H__
 
 #include "State.hpp"
 #include <FBModel/FloatingBaseModel.h>
 
 template<typename T> class WBC_Ctrl;
-template<typename T> class PrestoeLocomotionData;
+template<typename T> class PrestoeLocomotionCtrlData;
 template <typename T> class ObserverManager;
 template <typename T> class Command;
 
@@ -22,12 +22,12 @@ class LocomotionState : public State<T> {
     ObserverManager<T>* _obs_manager;
 
     void _ReadConfig(const std::string & file_name);
-    void _KeepPostureStep();
+    void _LocomotionStep();
     void _UpdateModel();
     void _UpdateCommand();
 
     WBC_Ctrl<T> * _wbc_ctrl;
-    PrestoeStandCtrlData<T> * _wbc_data;
+    PrestoeLocomotionCtrlData<T> * _wbc_data;
 
     T _targetHeight;
     T _x_pos_offset;

@@ -1,4 +1,4 @@
-#include "LocomotionMPC.hpp"
+#include "LocomotionState.hpp"
 #include <pretty_print.h>
 #include <utilities.h>
 #include <ParamHandler/ParamHandler.hpp>
@@ -19,13 +19,13 @@ LocomotionState<T>::LocomotionState(ObserverManager<T>* obs_manager, PrestoeSyst
   _ReadConfig(THIS_COM"/Systems/PrestoeSystem/Configs/locomotion_state.yaml");
   _jtorque_pos_cmd = new JTorquePosCommand<T>(prestoe::num_act_joint);
 
-  _wbc_ctrl = new PrestoeStandCtrl<T>(&_fb_model, THIS_COM"/Systems/PrestoeSystem/Configs/standing_state.yaml");
-  _wbc_data = new PrestoeStandCtrlData<T>();
+  _wbc_ctrl = new PrestoeLocomotionCtrl<T>(&_fb_model, THIS_COM"/Systems/PrestoeSystem/Configs/locomotion_state.yaml");
+  _wbc_data = new PrestoeLocomotionCtrlData<T>();
 
   _wbc_ctrl->setFloatingBaseWeight(10000.);
   _ini_jpos = DVec<T>::Zero(prestoe::num_act_joint);
 
-  printf("[Balance Stand State] Constructed\n");
+  printf("[Locomotion State] Constructed\n");
 }
 
 template <typename T>
@@ -57,9 +57,40 @@ void LocomotionState<T>::OnEnter() {
 }
 
 template <typename T>
+void LocomotionState<T>::_LocomotionStep() {
+    this->_state_time += this->_sys_info._ctrl_dt;
+    T curr_time = this->_state_time;
+
+    T des_height =  0.9;
+
+    //joints and orientation initialization
+    _wbc_data->pBody_RPY_des.setZero();
+    _wbc_data->jpos_des = _ini_jpos;
+
+    //setting COM targets
+    // _wbc_data->pBody_des = _mid_pos_cps;
+    _wbc_data->pBody_des = _ini_body_pos;
+
+    //stand up to a target height
+    // _wbc_data->pBody_des[2] = _ini_body_pos[2];
+    _wbc_data->pBody_des[2] = des_height;
+
+    _wbc_data->vBody_des.setZero();
+    _wbc_data->aBody_des.setZero();
+    _wbc_data->vBody_Ori_des.setZero();
+
+    for (size_t i(0); i<prestoe_contact::num_foot_contact; ++i) {
+      _wbc_data->Fr_des[i].setZero();
+      _wbc_data->contact_state[i] = 1;
+    }
+
+    _wbc_ctrl->run(_wbc_data);
+}
+
+template <typename T>
 void LocomotionState<T>::RunNominal() {
   _UpdateModel();
-  _KeepPostureStep();
+  _LocomotionStep();
   _UpdateCommand();
 }
 
@@ -75,42 +106,6 @@ void LocomotionState<T>::_UpdateCommand(){
       _wbc_ctrl->_des_jpos, _wbc_ctrl->_des_jvel, _Kp, _Kd);
 }
 
-template <typename T>
-void LocomotionState<T>::_KeepPostureStep() {
-    this->_state_time += this->_sys_info._ctrl_dt;
-    T curr_time = this->_state_time;
-
-    T standingDuration= 5;
-    T des_height =  smooth_change(_ini_body_pos[2], _targetHeight, standingDuration, curr_time);
-
-    if(curr_time > standingDuration){
-      des_height = _targetHeight + _z_swing_amp * sin(2.0*M_PI*_z_swing_freq*curr_time);
-    }
-
-    //joints and orientation initialization
-    _wbc_data->pBody_RPY_des.setZero();
-    _wbc_data->jpos_des = _ini_jpos;
-    //setting orientation targets
-    _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1];
-    _wbc_data->pBody_RPY_des[1] = smooth_change<T>(_ini_body_ori_rpy[1], 0.3, standingDuration, curr_time);
-
-    //setting COM targets
-    // _wbc_data->pBody_des = _mid_pos_cps;
-    _wbc_data->pBody_des = _ini_body_pos;
-    _wbc_data->pBody_des[0] += _x_pos_offset;
-
-    //stand up to a target height
-    // _wbc_data->pBody_des[2] = _ini_body_pos[2];
-    _wbc_data->pBody_des[2] = des_height;
-
-    _wbc_data->vBody_des.setZero();
-    _wbc_data->aBody_des.setZero();
-    _wbc_data->vBody_Ori_des.setZero();
-
-    for (size_t i(0); i<prestoe_contact::num_foot_contact; ++i) _wbc_data->Fr_des[i].setZero();
-
-    _wbc_ctrl->run(_wbc_data);
-}
 
 template<typename T>
 void LocomotionState<T>::_UpdateModel(){
